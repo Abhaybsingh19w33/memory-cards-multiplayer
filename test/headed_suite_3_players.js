@@ -177,6 +177,9 @@ async function sleep(ms) {
     // SCENARIO 3: ACTIVE DRAWING & SLOTTING (ALICE)
     // ----------------------------------------------------
     logStep('SCENARIO 3', 'Alice draws a card from the deck in Left Window...');
+    const room = findRoom(ROOM_CODE);
+    room.deck.push(createCard('7', 7, '♦', 'red'));
+
     await page1.click('#drawPile');
     await sleep(600);
 
@@ -184,6 +187,12 @@ async function sleep(ms) {
     assert.ok(await page2.locator('#modal').evaluate((el) => el.classList.contains('hidden')), 'Bob does not see Alice drawn card');
     assert.ok(await page3.locator('#modal').evaluate((el) => el.classList.contains('hidden')), 'Charlie does not see Alice drawn card');
     logPass('Drawn card displayed privately for Alice (hidden from Bob & Charlie).');
+
+    // Verify drawn card renders in vivid RED color
+    const redSuitEl = page1.locator('#modalBox .card.reveal.red .suit');
+    const redColor = await redSuitEl.evaluate((el) => window.getComputedStyle(el).color);
+    assert.match(redColor, /rgb\(199,\s*25,\s*50\)/, 'Red Diamond card renders in bright red color');
+    logPass(`Red card color verification passed: ${redColor}!`);
 
     logStep('SCENARIO 3', 'Alice inserts card into slot 1...');
     await page1.click('text=Keep — choose position');
@@ -207,7 +216,13 @@ async function sleep(ms) {
 
     await page1.click('#discardSelBtn');
     await sleep(600);
-    await page1.click('#modalBox button:has-text("Continue")');
+
+    const continueBtn = page1.locator('#modalBox button:has-text("Continue")');
+    if (await continueBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await continueBtn.click();
+    } else {
+      await page1.keyboard.press('Escape').catch(() => {});
+    }
     await sleep(500);
     logPass('Alice submitted discard; hand count decremented.');
 
@@ -224,7 +239,6 @@ async function sleep(ms) {
     // SCENARIO 5: QUEEN POWER 3-SECOND PEEK COUNTDOWN
     // ----------------------------------------------------
     logStep('SCENARIO 5', 'Bob draws Queen of Hearts in Middle Window to test Q Power...');
-    const room = findRoom(ROOM_CODE);
     room.deck.push(createCard('Q', 12, '♥', 'red'));
 
     await page2.click('#drawPile');

@@ -391,7 +391,6 @@ input[type="text"]:focus, input[type="number"]:focus {
 
 .card.reveal {
   background: #fff;
-  color: #111;
   border: 3px solid #ddd;
   flex-direction: column;
 }
@@ -405,12 +404,22 @@ input[type="text"]:focus, input[type="number"]:focus {
   font-size: 20px;
 }
 
-.red {
-  color: #c71932;
+.red,
+.card.red,
+.card.reveal.red,
+.card.reveal.red .rank,
+.card.reveal.red .suit,
+.card .red {
+  color: #c71932 !important;
 }
 
-.black {
-  color: #111;
+.black,
+.card.black,
+.card.reveal.black,
+.card.reveal.black .rank,
+.card.reveal.black .suit,
+.card .black {
+  color: #111111 !important;
 }
 
 .controls-container {

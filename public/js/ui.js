@@ -41,10 +41,12 @@ const UI = {
    * @returns {string}
    */
   cardFaceHtml(c, extraClass = '') {
-    const isRed = c.color === 'red';
-    return `<div class="card reveal ${isRed ? 'red' : 'black'} ${extraClass}">
-      <div class="rank">${this.esc(c.r)}</div>
-      <div class="suit">${this.esc(c.s)}</div>
+    if (!c) return '';
+    const isRed = c.color === 'red' || c.s === '♥' || c.s === '♦';
+    const textColor = isRed ? '#c71932' : '#111111';
+    return `<div class="card reveal ${isRed ? 'red' : 'black'} ${extraClass}" style="color:${textColor}">
+      <div class="rank" style="color:${textColor}">${this.esc(c.r)}</div>
+      <div class="suit" style="color:${textColor}">${this.esc(c.s)}</div>
     </div>`;
   },
 

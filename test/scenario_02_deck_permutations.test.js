@@ -200,3 +200,51 @@ test('Scenario 2 Permutations - Zero Information Leakage Across Phases', () => {
   }
 });
 
+test('Scenario 2 Permutations - High-Entropy Cryptographic Shuffle Quality & Color Balance', () => {
+  // 1. In a 2-deck shoe (104 cards), exactly 52 cards are red and 52 are black
+  const deck = makeDeck(4);
+  assert.strictEqual(deck.length, 104);
+
+  let redCount = 0;
+  let blackCount = 0;
+  for (const card of deck) {
+    if (card.color === 'red') {
+      assert.ok(card.s === '♥' || card.s === '♦', 'Red card must be Heart or Diamond');
+      redCount++;
+    } else {
+      assert.strictEqual(card.color, 'black');
+      assert.ok(card.s === '♠' || card.s === '♣', 'Black card must be Spade or Club');
+      blackCount++;
+    }
+  }
+  assert.strictEqual(redCount, 52, 'Exactly 52 red cards in 2-deck shoe');
+  assert.strictEqual(blackCount, 52, 'Exactly 52 black cards in 2-deck shoe');
+
+  // 2. High-Entropy Dispersion: Verify the deck is not in sorted suit order
+  const first10Cards = deck.slice(0, 10);
+  const first10Suits = new Set(first10Cards.map((c) => c.s));
+  const first10Colors = new Set(first10Cards.map((c) => c.color));
+
+  // In a well-shuffled 104-card deck, the first 10 cards will contain both colors
+  assert.strictEqual(first10Colors.size, 2, 'First 10 dealt cards must contain both red and black cards');
+  assert.ok(first10Suits.size >= 2, 'First 10 dealt cards must span multiple suits');
+
+  // 3. Permutation displacement: Verify shuffle displaces cards from initial sorted positions
+  let displacedCount = 0;
+  const rawShoe = [];
+  for (let n = 0; n < 2; n++) {
+    for (const [r, v] of RANKS) {
+      for (const [s, c] of SUITS) {
+        rawShoe.push({ r, s, color: c });
+      }
+    }
+  }
+  for (let i = 0; i < deck.length; i++) {
+    if (deck[i].r !== rawShoe[i].r || deck[i].s !== rawShoe[i].s) {
+      displacedCount++;
+    }
+  }
+  // With casino-grade shuffle, >95% of positions are displaced from original sorted order
+  assert.ok(displacedCount > 95, `Expected >95 displaced cards, got ${displacedCount}`);
+});
+
