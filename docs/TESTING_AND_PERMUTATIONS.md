@@ -1,17 +1,21 @@
 # Testing, Scenarios & Permutations Reference Guide
 
 This document serves as the comprehensive testing specification and regression safety catalog for the **Memory Cards Multiplayer** game. It documents all 92 automated test suites, covering every scenario, edge case, mathematical permutation, boundary condition, and architectural invariant.
+This document serves as the comprehensive testing specification and regression safety catalog for the **Memory Cards Multiplayer** game. It documents all 111 automated test suites, covering every scenario, edge case, mathematical permutation, boundary condition, and architectural invariant across 2-player and 3-player configurations.
 
 ---
 
 ## 1. Test Suite Architecture Overview
 
 The testing suite is built natively on Node.js's test runner (`node:test` and `node:assert`) with **zero external dependencies** required for headless testing. A full side-by-side headed Playwright runner is also provided for visual verification.
+The testing suite is built natively on Node.js's test runner (`node:test` and `node:assert`) with **zero external dependencies** required for headless testing. Dual-window and triple-window side-by-side headed Playwright runners are also provided for visual verification.
 
 ```
 test/
 ├── gameEngine.test.js                              # Core engine unit tests
 ├── headed_suite.js                                 # Headed side-by-side browser tests
+├── headed_suite.js                                 # Headed side-by-side browser tests (2 Players: Alice & Bob)
+├── headed_suite_3_players.js                       # Headed 3-window browser tests (3 Players: Alice, Bob & Charlie)
 ├── scenario_01_lobby.test.js                       # Scenario 1 base tests
 ├── scenario_01_lobby_permutations.test.js          # Scenario 1 exhaustive permutation matrix
 ├── scenario_02_deck_cards.test.js                  # Scenario 2 base tests
@@ -28,6 +32,7 @@ test/
 ├── scenario_07_play_again_permutations.test.js     # Scenario 7 field-by-field reset & round cycle tests
 ├── scenario_08_client_ui.test.js                   # Scenario 8 base tests (JSDOM)
 ├── scenario_08_client_ui_permutations.test.js      # Scenario 8 button states, DOM & XSS matrix
+├── scenario_3_players.test.js                      # Scenario 1–10 exhaustive 3-player verification suite
 ├── socketHandlers.test.js                          # Base socket lifecycle integration tests
 └── socket_handlers_permutations.test.js            # Socket event isolation & channel privacy matrix
 ```
@@ -201,17 +206,45 @@ Target rank is determined **strictly by the FIRST card selected** (`player.hand[
 
 ---
 
+### Scenario 9 & 10: 3-Player Specific Lifecycle, Ring Rotation & Privacy
+
+| Category | Input / Condition | Tested Invariant / Expected Behavior |
+| :--- | :--- | :--- |
+| **3-Way Turn Ring** | Alice (0) $\to$ Bob (1) $\to$ Charlie (2) | Circular turn transition cleanly wraps back to Alice (0). Inactive players rejected on every turn. |
+| **Out-of-Turn Discard & Penalties** | Multiple players throwing matching cards | Bob & Charlie can match discard out-of-turn. Wrong guess gives 2 penalty cards to offender only, preserving other players' hand sizes. |
+| **Jack Power Targeting** | Charlie draws Jack and triggers swap | Target selection presents Alice and Bob. Charlie can swap with Alice; Alice receives Charlie's card, Charlie receives Alice's card, Bob's hand is untouched. `jSwapNotice` banner broadcasts to all 3 players. |
+| **Queen Peek Isolation** | Bob peeks at face-down card with 3s timer | Card face and 3-second countdown are strictly isolated to Bob. Alice and Charlie receive zero card leakage and modals remain hidden. |
+| **Call Reveal 3-Way Final Round** | Alice calls Reveal | Every other player (Bob, Charlie) receives exactly 1 final turn. Round concludes the moment turn returns to Alice. |
+| **Play Again 3-Player Reset** | Alice requests Play Again | All 3 players re-dealt clean hands of `cardsPerPlayer`. All UI action buttons (Arrange, Discard, Call, Next) active and responsive across all 3 windows. |
+
+---
+
 ## 3. Running the Tests
 
 ### Fast Headless Unit & Permutation Suite
 Executes all 92 automated tests across all 10 test suites:
+Executes all 111 automated tests across all 21 test suites:
 ```powershell
 npm test
 ```
 
 ### Side-by-Side Headed Visual Browser Suite
 Spawns dual browser windows (Alice on the left, Bob on the right) for visual inspection of real-time multiplayer interactions:
+### 3-Player Specific Headless Test Suite
+Executes all 10 scenarios specifically tailored for 3 players:
+```powershell
+node --test test/scenario_3_players.test.js
+```
+
+### Side-by-Side Headed Visual Browser Suite (2 Players: Alice & Bob)
+Spawns dual browser windows side-by-side on your desktop:
 ```powershell
 npm run test:headed
+```
+
+### Triple-Window Headed Visual Browser Suite (3 Players: Alice, Bob & Charlie)
+Spawns 3 browser windows side-by-side across your desktop:
+```powershell
+npm run test:headed:3p
 ```
 

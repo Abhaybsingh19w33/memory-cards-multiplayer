@@ -50,6 +50,14 @@ class Room {
   }
 
   /**
+   * Returns the PID of the room host (first player to join).
+   * @returns {string|null}
+   */
+  hostPid() {
+    return this.players[0] ? this.players[0].pid : null;
+  }
+
+  /**
    * Finds a player in the room by their PID.
    * @param {string} pid - Player ID
    * @returns {Player|null}
