@@ -22,8 +22,11 @@ const Store = {
   // Selected hand index during arrange mode
   arrangeSelected: null,
 
-  // Tracks active auto-flow modal to prevent re-render flicker ('q' | 'j')
+  // Tracks active auto-flow modal to prevent re-render flicker ('q' | 'j' | 'q_display')
   autoModalOpen: null,
+
+  // Tracks active Queen peek countdown to prevent premature modal closure
+  isPeeking: false,
 
   /**
    * Persists player identity credentials in browser localStorage.
@@ -75,6 +78,7 @@ const Store = {
     this.selected.clear();
     this.arrangeSelected = null;
     this.autoModalOpen = null;
+    this.isPeeking = false;
   },
 
   /**

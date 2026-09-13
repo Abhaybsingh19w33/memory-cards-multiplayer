@@ -31,6 +31,10 @@ const SocketClient = {
 
     // Incoming error notification
     this.socket.on('errorMsg', ({ message }) => {
+      Store.isPeeking = false;
+      if (Store.autoModalOpen === 'q_display') {
+        Store.autoModalOpen = null;
+      }
       UI.showErr(message);
     });
 

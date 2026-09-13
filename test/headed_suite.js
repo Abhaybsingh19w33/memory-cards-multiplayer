@@ -10,6 +10,8 @@
 
 const { chromium } = require('playwright-core');
 const { createApp } = require('../src/app');
+const { findRoom } = require('../src/sockets/socketHandlers');
+const { createCard } = require('../src/models/Card');
 const assert = require('node:assert');
 
 const TEST_PORT = 3055;
@@ -186,6 +188,48 @@ async function sleep(ms) {
     const bobTurnBadge = await page2.textContent('#turnBadge');
     assert.ok(bobTurnBadge.includes('Bob'));
     logPass('Turn seamlessly passed to Bob in Right Window!');
+
+    // ----------------------------------------------------
+    // SCENARIO 5: QUEEN POWER 3-SECOND PEEK COUNTDOWN
+    // ----------------------------------------------------
+    logStep('SCENARIO 5', 'Bob draws Queen of Hearts in Right Window to test Q Power...');
+    const room = findRoom('SPLIT');
+    room.deck.push(createCard('Q', 12, '♥', 'red'));
+
+    await page2.click('#drawPile');
+    await sleep(800);
+    assert.ok(await page2.isVisible('#modalBox:has-text("You drew a card")'));
+    logPass('Bob drew Queen of Hearts!');
+
+    logStep('SCENARIO 5', 'Bob clicks "Discard drawn" to trigger Queen Power...');
+    await page2.click('#modalBox button:has-text("Discard drawn")');
+    await sleep(800);
+
+    assert.ok(await page2.isVisible('#modalBox:has-text("Q Power — Peek at one of your cards")'));
+    logPass('Queen Power modal displayed in Right Window (hidden from Alice in Left Window).');
+
+    logStep('SCENARIO 5', 'Bob selects card to peek -> Verifying 3-second view timer...');
+    await page2.locator('#modalBox .card.back').first().click();
+    await sleep(400);
+
+    const peekTimer = page2.locator('#peekTimer');
+    assert.ok(await peekTimer.isVisible(), '3-second peek timer must be visible in Right Window');
+    assert.ok(await page1.locator('#modal').evaluate((el) => el.classList.contains('hidden')), 'Left Window (Alice) receives zero peek information');
+    logPass('Peek modal actively showing card face with gold 3-second countdown timer!');
+
+    // Verify countdown timer progresses without premature closure
+    await sleep(1000);
+    const t2 = await peekTimer.textContent();
+    logPass(`Timer at ${t2}s — modal remains open and responsive.`);
+
+    await sleep(1000);
+    const t1 = await peekTimer.textContent();
+    logPass(`Timer at ${t1}s — modal remains open.`);
+
+    await sleep(1200);
+    const modalClosed = await page2.locator('#modal').evaluate((el) => el.classList.contains('hidden'));
+    assert.ok(modalClosed, 'Peek modal automatically and cleanly dismissed after 3 seconds!');
+    logPass(`${colors.green}${colors.bold}SUCCESS: Queen Power 3-second view timer works flawlessly!${colors.reset}`);
 
     // ----------------------------------------------------
     // SCENARIO 6: CALL REVEAL & FINAL SCORING

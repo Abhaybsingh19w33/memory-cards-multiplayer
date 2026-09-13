@@ -66,8 +66,8 @@ To prevent this:
      Store.autoModalOpen = 'q';
      ...
    ```
-2. **`closeModalIfAutoFlow()`**:
-   Only automatically closes the modal when `stage` returns to `'start'` and `autoModalOpen` was active.
+2. **`closeModalIfAutoFlow()` and `Store.isPeeking`**:
+   Only automatically closes the modal when `stage` returns to `'start'` and `autoModalOpen` was active. When displaying a peeked card with the 3-second timer, `Store.isPeeking = true` and `Store.autoModalOpen = 'q_display'` guard the modal against being closed prematurely by incoming state updates.
 3. **Universal Container**: A single `#modal` backdrop contains `#modalBox`. Dialogs replace only the inner modal contents rather than polluting the main table hierarchy.
 
 ---

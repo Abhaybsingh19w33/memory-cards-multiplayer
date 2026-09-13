@@ -56,6 +56,9 @@ flowchart TD
    - Opponents receive zero card details (maintaining the authoritative privacy golden rule).
    - Once the timer reaches 0, the card is hidden and the modal is dismissed.
 
+> [!IMPORTANT]
+> **Reactive Render Immunity**: When the server processes the last peek, it transitions `room.stage` to `'start'` and broadcasts the new room state. To prevent `UI.render()` and `closeModalIfAutoFlow()` from prematurely hiding the peek modal, the client sets `Store.isPeeking = true` and `Store.autoModalOpen = 'q_display'`. This protects the modal from being closed or overwritten until the 3-second countdown fully completes.
+
 ---
 
 ## 4. Jack Power: Blind Swap

@@ -18,6 +18,7 @@ memory-cards-multiplayer/
 ├── docs/                             # Comprehensive technical documentation
 │   ├── ARCHITECTURE.md               # High-level architecture and subsystem design (this file)
 │   ├── GOLDEN_RULES.md               # Core architectural and engineering golden rules
+│   ├── TESTING_AND_PERMUTATIONS.md   # Complete 92-test specification and permutation reference
 │   ├── BUG_POSTMORTEM_PLAY_AGAIN.md  # Detailed root-cause analysis and resolution for Play Again
 │   ├── API_AND_EVENTS.md             # Socket.IO event catalog, schemas, and contracts
 │   └── scenarios/                    # Step-by-step scenario walkthroughs
@@ -51,10 +52,19 @@ memory-cards-multiplayer/
 │   │   └── GameEngine.js             # Pure business logic: matching, penalties, powers, turns
 │   ├── sockets/
 │   │   └── socketHandlers.js         # Socket.IO event handlers and state broadcasting
-│   └── app.js                        # Express and Socket.IO application factory
-├── test/                             # Automated test suite (Node.js built-in test runner)
-│   ├── gameEngine.test.js            # Unit tests for models and game logic
-│   └── socketHandlers.test.js        # Integration tests for socket events and lifecycle
+├── test/                             # Automated test suite (92 tests across 10 suites)
+│   ├── gameEngine.test.js            # Core unit tests for models and game rules
+│   ├── socketHandlers.test.js        # Base socket integration tests
+│   ├── scenario_01_*.test.js         # Scenario 1: Lobby & reconnection permutations
+│   ├── scenario_02_*.test.js         # Scenario 2: Deck, card valuation & privacy permutations
+│   ├── scenario_03_*.test.js         # Scenario 3: Turn lifecycle & slot permutations
+│   ├── scenario_04_*.test.js         # Scenario 4: Matching & penalty permutations
+│   ├── scenario_05_*.test.js         # Scenario 5: Queen peek & Jack swap permutations
+│   ├── scenario_06_*.test.js         # Scenario 6: Call reveal, 0-card & scoring permutations
+│   ├── scenario_07_*.test.js         # Scenario 7: Round reset & Play Again permutations
+│   ├── scenario_08_*.test.js         # Scenario 8: Client UI, button states & XSS permutations
+│   ├── socket_handlers_*.test.js     # Socket event isolation & channel privacy permutations
+│   └── headed_suite.js               # Side-by-side visual headed browser runner
 ├── package.json                      # Project dependencies and npm scripts
 ├── README.md                         # Quick start guide and user overview
 └── server.js                         # Application entrypoint

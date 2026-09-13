@@ -94,6 +94,7 @@ const UI = {
    * Closes automatic power modals if stage transitioned.
    */
   closeModalIfAutoFlow() {
+    if (Store.isPeeking || Store.autoModalOpen === 'q_display') return;
     if (Store.autoModalOpen === 'q' || Store.autoModalOpen === 'j') {
       this.closeModal();
       Store.autoModalOpen = null;
@@ -109,6 +110,10 @@ const UI = {
 
     // Detect phase transition from REVEAL -> NORMAL (i.e. "Play Again" was clicked)
     if (this.previousPhase === UI_PHASES.REVEAL && s.phase === UI_PHASES.NORMAL) {
+      if (this._peekInterval) {
+        clearInterval(this._peekInterval);
+        this._peekInterval = null;
+      }
       Store.resetRoundClientState();
       this.closeModal();
     }
@@ -138,6 +143,10 @@ const UI = {
 
     const mine = Store.isMyTurn();
     if (mine) {
+      if (Store.isPeeking || Store.autoModalOpen === 'q_display') {
+        // Active peek countdown is displaying; keep peek modal open
+        return;
+      }
       if (s.stage === UI_STAGES.QPOWER) this.openQPeekModal();
       else if (s.stage === UI_STAGES.JPOWER) this.openJSwapModal();
       else this.closeModalIfAutoFlow();
@@ -430,7 +439,7 @@ const UI = {
    * Queen Power: Shows modal to choose which own card to peek at.
    */
   openQPeekModal() {
-    if (Store.autoModalOpen === 'q') return;
+    if (Store.isPeeking || Store.autoModalOpen === 'q_display' || Store.autoModalOpen === 'q') return;
     Store.autoModalOpen = 'q';
 
     const my = Store.myEntry();
@@ -448,6 +457,8 @@ const UI = {
   },
 
   qPeekPick(i) {
+    Store.isPeeking = true;
+    Store.autoModalOpen = 'q_display';
     SocketClient.emit('qPeekChoose', { position: i });
   },
 
@@ -457,6 +468,9 @@ const UI = {
    * @param {number} remaining 
    */
   showQPeekDisplay(card, remaining) {
+    Store.isPeeking = true;
+    Store.autoModalOpen = 'q_display';
+
     this.openModal(`
       <h2>Peek</h2>
       ${this.cardFaceHtml(card, 'modalCard')}
@@ -465,17 +479,31 @@ const UI = {
     `);
 
     let t = 3;
-    const interval = setInterval(() => {
+    if (this._peekInterval) {
+      clearInterval(this._peekInterval);
+      this._peekInterval = null;
+    }
+
+    this._peekInterval = setInterval(() => {
       t--;
       const el = this.$('peekTimer');
       if (el) el.textContent = t;
       if (t <= 0) {
-        clearInterval(interval);
+        clearInterval(this._peekInterval);
+        this._peekInterval = null;
+        Store.isPeeking = false;
+        Store.autoModalOpen = null;
+
         if (remaining > 0) {
           this.openQPeekModal();
         } else {
           this.closeModal();
-          Store.autoModalOpen = null;
+          const s = Store.s;
+          if (Store.isMyTurn() && s && s.stage === UI_STAGES.JPOWER) {
+            this.openJSwapModal();
+          } else {
+            this.render();
+          }
         }
       }
     }, 1000);
