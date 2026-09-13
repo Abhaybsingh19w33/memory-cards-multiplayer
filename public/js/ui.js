@@ -71,6 +71,19 @@ const UI = {
   },
 
   /**
+   * Displays an ephemeral positive/informational notification banner.
+   * @param {string} msg 
+   */
+  showNotice(msg) {
+    const el = this.$('noticeBanner');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    clearTimeout(this.showNotice._t);
+    this.showNotice._t = setTimeout(() => el.classList.add('hidden'), 4500);
+  },
+
+  /**
    * Opens the universal modal popup with provided HTML.
    * @param {string} html 
    */
@@ -88,6 +101,25 @@ const UI = {
   closeModal() {
     const modal = this.$('modal');
     if (modal) modal.classList.add('hidden');
+  },
+
+  /**
+   * Toggles collapse/expand state of the updates feed in the hand panel.
+   * @param {boolean} [force] 
+   */
+  toggleLogCollapse(force) {
+    Store.logCollapsed = typeof force === 'boolean' ? force : !Store.logCollapsed;
+    if (Store.s) {
+      this.renderLog(Store.s);
+    }
+  },
+
+  /**
+   * Alias for backward compatibility.
+   * @param {boolean} [force]
+   */
+  toggleUpdates(force) {
+    this.toggleLogCollapse(typeof force === 'boolean' ? !force : undefined);
   },
 
   /**
@@ -208,7 +240,17 @@ const UI = {
   renderPiles(s) {
     this.$('discardPile').innerHTML = s.discardTop ? this.cardFaceHtml(s.discardTop) : '—';
     this.$('turnBadge').textContent = `Turn: ${s.currentName || '—'}`;
-    this.$('statusBadge').textContent = s.finalActive ? 'FINAL ROUND' : `Draw pile: ${s.deckCount}`;
+
+    const statusBadge = this.$('statusBadge');
+    if (statusBadge) {
+      if (s.finalActive) {
+        statusBadge.textContent = 'FINAL ROUND';
+        statusBadge.classList.remove('hidden');
+      } else {
+        statusBadge.textContent = '';
+        statusBadge.classList.add('hidden');
+      }
+    }
 
     const mine = Store.isMyTurn();
     const drawOff = !mine || s.stage !== UI_STAGES.START || s.drawnThisTurn;
@@ -220,6 +262,9 @@ const UI = {
    * @param {object} s 
    */
   renderHand(s) {
+    const handArea = this.$('handArea');
+    if (handArea) handArea.classList.remove('hidden');
+
     const my = Store.myEntry();
     this.$('handTitle').textContent = my ? `Your cards (${my.count})` : 'Your cards';
 
@@ -248,6 +293,9 @@ const UI = {
     const hasCards = Boolean(my && my.count > 0);
     const isPlayPhase = s.phase === UI_PHASES.NORMAL || s.phase === UI_PHASES.FINAL;
 
+    const handArea = this.$('handArea');
+    if (handArea) handArea.classList.remove('hidden');
+
     // Show gameplay controls and hide reveal controls
     const gameplayControls = this.$('gameplayControls');
     const revealControls = this.$('revealControls');
@@ -275,7 +323,16 @@ const UI = {
    */
   renderReveal(s) {
     this.$('turnBadge').textContent = 'All cards revealed!';
-    this.$('statusBadge').textContent = '';
+
+    const statusBadge = this.$('statusBadge');
+    if (statusBadge) {
+      statusBadge.textContent = '';
+      statusBadge.classList.add('hidden');
+    }
+
+    const handArea = this.$('handArea');
+    if (handArea) handArea.classList.add('hidden');
+
     this.$('handTitle').textContent = '';
     this.$('hand').innerHTML = '';
     this.$('selectedInfo').textContent = '';
@@ -302,6 +359,8 @@ const UI = {
 
     if (gameplayControls) gameplayControls.classList.add('hidden');
     if (revealControls) revealControls.classList.remove('hidden');
+
+    this.renderLog(s);
   },
 
   /**
@@ -341,15 +400,74 @@ const UI = {
 
   /**
    * Renders room event log.
+   * Latest messages are rendered on top with user-friendly formatting and action badges.
    * @param {object} s 
    */
   renderLog(s) {
     const logBox = this.$('logBox');
     if (!logBox) return;
-    logBox.innerHTML = (s.log || [])
-      .slice(-10)
-      .map((line) => `• ${this.esc(line)}`)
-      .join('<br>');
+
+    const rawLogs = s.log || [];
+    const isCollapsed = Boolean(Store.logCollapsed);
+    logBox.classList.toggle('collapsed', isCollapsed);
+
+    if (rawLogs.length === 0) {
+      logBox.innerHTML = `
+        <div class="logHeader">
+          <div class="logTitleWrap">
+            <span>📜 Updates</span>
+            <span class="logBadgeOrder">Latest on top</span>
+          </div>
+        </div>
+        <div class="logList">
+          <div class="logItem" style="color:#79aab8;font-style:italic">No updates yet. Tap draw deck to begin!</div>
+        </div>
+      `;
+      return;
+    }
+
+    if (isCollapsed) {
+      const latestMsg = rawLogs[rawLogs.length - 1];
+      logBox.innerHTML = `
+        <div class="logHeader collapsible" onclick="UI.toggleLogCollapse(false)" title="Click to expand updates">
+          <div class="logTitleWrap">
+            <span>📜 Updates</span>
+            <span class="logSubText">(${rawLogs.length} events · Latest: ${this.esc(latestMsg.slice(0, 35))}…)</span>
+          </div>
+          <button class="logToggleBtn" onclick="event.stopPropagation(); UI.toggleLogCollapse(false)">▲ Expand</button>
+        </div>
+      `;
+      return;
+    }
+
+    const logs = [...rawLogs].reverse().slice(0, 40);
+    const itemsHtml = logs.map((line, i) => {
+      const isLatest = i === 0;
+      let icon = '•';
+      if (/J power|exchanged|blind-swap/i.test(line)) icon = '🔄';
+      else if (/Q power|peek/i.test(line)) icon = '👁️';
+      else if (/wrong|penalty/i.test(line)) icon = '⚠️';
+      else if (/played|matched|discard/i.test(line)) icon = '✨';
+      else if (/drew/i.test(line)) icon = '🎴';
+      else if (/called reveal|revealed/i.test(line)) icon = '📢';
+      else if (/reconnected|disconnected/i.test(line)) icon = '🔌';
+
+      return `<div class="logItem ${isLatest ? 'latest' : ''}">
+        <span class="logIcon">${icon}</span>
+        <span class="logText">${isLatest ? '<span class="logBadgeNew">NEW</span>' : ''}${this.esc(line)}</span>
+      </div>`;
+    }).join('');
+
+    logBox.innerHTML = `
+      <div class="logHeader open">
+        <div class="logTitleWrap">
+          <span>📜 Updates</span>
+          <span class="logBadgeOrder">Latest on top</span>
+        </div>
+        <button class="logToggleBtn" onclick="UI.toggleLogCollapse(true)" title="Minimize updates">▼ Minimize</button>
+      </div>
+      <div class="logList">${itemsHtml}</div>
+    `;
   },
 
   /**
@@ -542,7 +660,10 @@ const UI = {
     const my = Store.myEntry();
     let cardsHtml = '';
     for (let i = 0; i < (my ? my.count : 0); i++) {
-      cardsHtml += `<div class="card back" onclick="UI.jChooseOwn('${targetPid}', '${this.esc(targetName)}', ${targetCount}, ${i})"></div>`;
+      cardsHtml += `<div class="cardChoice" onclick="UI.jChooseOwn('${targetPid}', '${this.esc(targetName)}', ${targetCount}, ${i})">
+        <div class="card back"></div>
+        <div class="cardNum">Card #${i + 1}</div>
+      </div>`;
     }
 
     this.openModal(`
@@ -555,12 +676,15 @@ const UI = {
   jChooseOwn(targetPid, targetName, targetCount, ownPos) {
     let cardsHtml = '';
     for (let i = 0; i < targetCount; i++) {
-      cardsHtml += `<div class="card back" onclick="UI.jFinish('${targetPid}', ${ownPos}, ${i})"></div>`;
+      cardsHtml += `<div class="cardChoice" onclick="UI.jFinish('${targetPid}', ${ownPos}, ${i})">
+        <div class="card back"></div>
+        <div class="cardNum">Card #${i + 1}</div>
+      </div>`;
     }
 
     this.openModal(`
       <h2>Choose their card</h2>
-      <p class="sub">Select one of ${this.esc(targetName)}'s cards to swap with yours.</p>
+      <p class="sub">Select one of ${this.esc(targetName)}'s cards to swap with your Card #${ownPos + 1}.</p>
       <div class="hand">${cardsHtml}</div>
     `);
   },

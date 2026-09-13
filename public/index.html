@@ -42,7 +42,7 @@
     <div class="topbar">
       <button class="secondary" id="topbarNewGameBtn" onclick="UI.confirmNewGame()">New Game</button>
       <div id="turnBadge" class="badge">Turn</div>
-      <div id="statusBadge" class="badge"></div>
+      <div id="statusBadge" class="badge hidden"></div>
     </div>
 
     <!-- Opponent and table players -->
@@ -62,12 +62,14 @@
 
     <!-- Local player's hand and controls -->
     <div class="handPanel">
-      <div class="handTitle">
-        <b id="handTitle">Your cards</b>
-        <span id="selectedInfo" class="sub" style="margin:0"></span>
-      </div>
+      <div id="handArea" class="handArea">
+        <div class="handTitle">
+          <b id="handTitle">Your cards</b>
+          <span id="selectedInfo" class="sub" style="margin:0"></span>
+        </div>
 
-      <div id="hand" class="hand"></div>
+        <div id="hand" class="hand"></div>
+      </div>
 
       <!-- Control buttons: Separated into Gameplay and Reveal groups to prevent DOM destruction -->
       <div id="controlsContainer" class="controls-container">
@@ -94,6 +96,9 @@
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
     <div id="modalBox" class="modalBox"></div>
   </div>
+
+  <!-- ================= NOTIFICATION BANNER ================= -->
+  <div id="noticeBanner" class="noticeBanner hidden" role="status"></div>
 
   <!-- ================= ERROR BANNER ================= -->
   <div id="errBanner" class="errBanner hidden" role="alert"></div>

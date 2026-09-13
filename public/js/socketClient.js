@@ -58,6 +58,11 @@ const SocketClient = {
     this.socket.on('yourQPeek', ({ card, remaining }) => {
       UI.showQPeekDisplay(card, remaining);
     });
+
+    // Jack power blind-swap notification for all players
+    this.socket.on('jSwapNotice', (data) => {
+      UI.showNotice(`🔄 ${data.message}`);
+    });
   },
 
   /**

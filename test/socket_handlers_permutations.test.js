@@ -141,6 +141,14 @@ test('Socket Protocol Permutations - Jack Swap and Skip Sockets Flow', () => {
   assert.strictEqual(room.players[1].hand[0].uid, p1Card.uid);
   assert.strictEqual(room.jCount, 1);
 
+  // Verify jSwapNotice broadcast to room
+  const notice = io.emitted.find((e) => e.event === 'jSwapNotice');
+  assert.ok(notice, 'jSwapNotice must be emitted to room');
+  assert.strictEqual(notice.channel, roomCode);
+  assert.strictEqual(notice.payload.ownCardNum, 1);
+  assert.strictEqual(notice.payload.theirCardNum, 1);
+  assert.match(notice.payload.message, /Player1 exchanged Card #1 with Player2's Card #1 using J power/);
+
   // 2. Skip remaining swap via socket
   socket1.trigger('jSwapSkip');
   assert.strictEqual(room.jCount, 0);

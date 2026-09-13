@@ -71,6 +71,11 @@ test('Scenario 5 - Jack Power: Blind Swap Mechanics', () => {
   // Execute valid swap between p1 slot 0 and p2 slot 2
   const validSwap = GameEngine.jSwap(room, p1.pid, p2.pid, 0, 2);
   assert.strictEqual(validSwap.success, true);
+  assert.ok(validSwap.swap);
+  assert.strictEqual(validSwap.swap.ownCardNum, 1);
+  assert.strictEqual(validSwap.swap.theirCardNum, 3);
+  assert.match(validSwap.swap.message, /P1 exchanged Card #1 with P2's Card #3 using J power/);
+  assert.match(room.log[room.log.length - 1], /P1 exchanged Card #1 with P2's Card #3 using J power/);
   assert.strictEqual(p1.hand[0].uid, p2Card.uid, 'p1 now holds p2 original card');
   assert.strictEqual(p2.hand[2].uid, p1Card.uid, 'p2 now holds p1 original card');
   assert.strictEqual(room.jCount, 0);

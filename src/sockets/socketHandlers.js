@@ -255,6 +255,10 @@ function registerSocketHandlers(io) {
         return;
       }
 
+      if (res.swap) {
+        io.to(room.code).emit('jSwapNotice', res.swap);
+      }
+
       broadcastState(io, room);
     });
 

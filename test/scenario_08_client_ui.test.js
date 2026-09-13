@@ -199,6 +199,9 @@ test('Scenario 8 - Control Bar Integrity & "Play Again" Bug Resolution (CRITICAL
   assert.ok(gameplayControls.classList.contains('hidden'), 'Gameplay controls must be hidden in reveal');
   assert.ok(!revealControls.classList.contains('hidden'), 'Reveal controls must be visible in reveal');
 
+  const handArea = document.getElementById('handArea');
+  assert.ok(handArea.classList.contains('hidden'), 'handArea must be hidden in reveal to eliminate blank space');
+
   // VERIFY GOLDEN RULE: Buttons must STILL exist in DOM and NOT be null or destroyed!
   assert.ok(document.getElementById('discardSelBtn') !== null, 'discardSelBtn must NEVER be destroyed');
   assert.ok(document.getElementById('callBtn') !== null, 'callBtn must NEVER be destroyed');
@@ -225,6 +228,7 @@ test('Scenario 8 - Control Bar Integrity & "Play Again" Bug Resolution (CRITICAL
   assert.ok(!gameplayControls.classList.contains('hidden'), 'Gameplay controls must be restored');
   assert.ok(revealControls.classList.contains('hidden'), 'Reveal controls must be hidden');
   assert.ok(modal.classList.contains('hidden'), 'Ranking modal must be closed on new round');
+  assert.ok(!handArea.classList.contains('hidden'), 'handArea must be visible in normal phase');
   assert.strictEqual(document.getElementById('discardSelBtn').disabled, false, 'Discard button must be re-enabled');
   assert.strictEqual(document.getElementById('callBtn').disabled, false, 'Call button must be re-enabled');
   assert.strictEqual(document.getElementById('nextBtn').disabled, false, 'Next button must be re-enabled');
@@ -258,4 +262,80 @@ test('Scenario 8 - Ephemeral Error Banner Display', () => {
   UI.showErr('Illegal Move Attempted!');
   assert.ok(!errBanner.classList.contains('hidden'));
   assert.strictEqual(errBanner.textContent, 'Illegal Move Attempted!');
+});
+
+test('Scenario 8 - Ephemeral Notice Banner & J Swap Notification Display', () => {
+  const { document, UI } = createUIEnvironment();
+
+  const noticeBanner = document.getElementById('noticeBanner');
+  assert.ok(noticeBanner.classList.contains('hidden'));
+
+  UI.showNotice('🔄 Alice exchanged Card #1 with Bob\'s Card #2 using J power.');
+  assert.ok(!noticeBanner.classList.contains('hidden'));
+  assert.match(noticeBanner.textContent, /Alice exchanged Card #1 with Bob's Card #2/);
+});
+
+test('Scenario 8 - Top-Right Badge Cleanup & User-Friendly Latest-First Updates Log', () => {
+  const { document, Store, UI } = createUIEnvironment();
+
+  Store.me = { pid: 'p1', name: 'Alice', roomCode: 'ROOM1' };
+  Store.s = {
+    phase: 'normal',
+    currentIndex: 0,
+    currentName: 'Alice',
+    deckCount: 42,
+    finalActive: false,
+    players: [{ pid: 'p1', name: 'Alice', count: 4, connected: true }],
+    log: [
+      'Alice drew and slotted a card.',
+      'Bob played 1 card(s) from their hand.',
+      'Alice exchanged Card #2 with Bob\'s Card #1 using J power.',
+    ],
+  };
+
+  UI.render();
+
+  // 1. Verify number of cards (deckCount) is NOT shown in top right corner
+  const statusBadge = document.getElementById('statusBadge');
+  assert.ok(statusBadge.classList.contains('hidden'), 'statusBadge must be hidden when not final round');
+  assert.strictEqual(statusBadge.textContent, '', 'Draw pile card count must NOT be rendered in top right');
+
+  // 2. Verify updates section has latest message at top with NEW badge
+  const logBox = document.getElementById('logBox');
+  assert.ok(logBox.innerHTML.includes('Latest on top'));
+  assert.match(logBox.innerHTML, /NEW/);
+
+  const logItems = logBox.querySelectorAll('.logItem');
+  assert.strictEqual(logItems.length, 3);
+  assert.ok(logItems[0].classList.contains('latest'), 'First log item must be the latest message');
+  assert.match(logItems[0].textContent, /Alice exchanged Card #2 with Bob's Card #1/);
+  assert.match(logItems[2].textContent, /Alice drew and slotted a card/);
+
+  // 3. Verify updates feed is located in handPanel at previous position
+  const handPanel = document.querySelector('.handPanel');
+  assert.ok(handPanel.contains(logBox), 'logBox must be located inside handPanel in previous position');
+
+  // Verify minimizing updates feed in-place
+  assert.ok(!logBox.classList.contains('collapsed'), 'logBox should be expanded by default');
+  assert.match(logBox.innerHTML, /▼ Minimize/);
+
+  // Toggle minimize
+  UI.toggleLogCollapse();
+  assert.ok(logBox.classList.contains('collapsed'), 'logBox should have collapsed class');
+  assert.match(logBox.innerHTML, /▲ Expand/);
+
+  // Toggle expand
+  UI.toggleLogCollapse();
+  assert.ok(!logBox.classList.contains('collapsed'), 'logBox should be re-expanded');
+  assert.match(logBox.innerHTML, /▼ Minimize/);
+
+  // 4. Verify responsive stylesheet layout safeguards
+  const fs = require('fs');
+  const path = require('path');
+  const css = fs.readFileSync(path.join(__dirname, '../public/css/style.css'), 'utf8');
+
+  assert.ok(css.includes('overscroll-behavior: contain'), 'CSS must contain touch scroll isolation for logList');
+  assert.ok(css.includes('display: flex') && css.includes('flex-direction: column'), 'Table must use flex column layout');
+  assert.ok(css.includes('justify-content: flex-start'), 'Table must align flex-start so cards and buttons remain stationary on toggle');
+  assert.ok(!css.includes('.log {\n    font-size: 11px;\n    max-height: 75px;'), 'Log must not be capped at 75px in mobile media query');
 });

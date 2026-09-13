@@ -257,6 +257,22 @@ Reveals a single face-down card to the player for Queen power.
 
 ---
 
+### `jSwapNotice`
+Broadcasts a Jack blind-swap event to all players in the room, informing everyone which cards were exchanged.
+- **Channel**: `io.to(room.code)`.
+- **Payload**:
+  ```json
+  {
+    "actorName": "Alice",
+    "targetName": "Bob",
+    "ownCardNum": 2,
+    "theirCardNum": 1,
+    "message": "Alice exchanged Card #2 with Bob's Card #1 using J power."
+  }
+  ```
+
+---
+
 ### `errorMsg`
 Non-blocking error feedback.
 - **Channel**: `io.to(target)`.

@@ -72,9 +72,12 @@ flowchart TD
    ```javascript
    SocketClient.emit('jSwap', { targetPid, ownPos, theirPos });
    ```
-7. **The "Blind" Principle**:
-   - Neither the active player nor the opponent sees either card.
+7. **The "Blind" Principle & Table-Wide Notification**:
+   - Neither the active player nor the opponent sees either card face (strictly preserving Golden Rule 1).
    - The server atomically swaps `me.hand[ownPos]` with `target.hand[theirPos]`.
-   - Audit log reports: `"[Player] used J power to blind-swap a card with [Opponent]."`
+   - **Table Broadcast**: The server broadcasts `jSwapNotice` to all players in the room, displaying a prominent announcement banner:
+     `"[Player] exchanged Card #[ownCardNum] with [Opponent]'s Card #[theirCardNum] using J power."`
+   - **Audit Log**: Formatted identically with 1-based card positions in `room.log` and displayed in the user-friendly updates feed.
+   - **Client Modals**: Selection cards are explicitly labeled (`Card #1`, `Card #2`, etc.) so players intuitively know which slot they are selecting.
 8. **Skipping**: The active player may choose to skip the swap at any time by clicking **Skip this swap** (`jSwapSkip`), decrementing `room.jCount` without modifying hands.
 

@@ -351,8 +351,25 @@ class GameEngine {
       room.stage = TURN_STAGES.START;
     }
 
-    room.addLog(`${me.name} used J power to blind-swap a card with ${target.name}.`);
-    return { success: true };
+    const ownCardNum = oi + 1;
+    const theirCardNum = ti + 1;
+    const message = `${me.name} exchanged Card #${ownCardNum} with ${target.name}'s Card #${theirCardNum} using J power.`;
+    room.addLog(message);
+
+    return {
+      success: true,
+      swap: {
+        actorPid: me.pid,
+        actorName: me.name,
+        targetPid: target.pid,
+        targetName: target.name,
+        ownPos: oi,
+        theirPos: ti,
+        ownCardNum,
+        theirCardNum,
+        message,
+      },
+    };
   }
 
   /**
