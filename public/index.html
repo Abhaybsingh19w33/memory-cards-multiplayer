@@ -1,416 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Memory Cards — Online</title>
-<style>
-:root{--felt:#075b3a;--gold:#ffc857;--danger:#ff5b67;--muted:#a9bdc9;--accent:#20d67a}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#071018;color:#fff;min-height:100vh;overflow-x:hidden}
-button,input{font:inherit}
-button{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
-.hidden{display:none!important}
-.screen{min-height:100vh;padding:18px;display:flex;flex-direction:column}
-.setup{max-width:480px;width:100%;margin:auto;background:#0c1d29;border:1px solid #254356;border-radius:22px;padding:24px;box-shadow:0 18px 60px #0008}
-h1{margin:0 0 8px;font-size:28px}h2{margin:0 0 14px}.sub{color:var(--muted);margin:0 0 18px;font-size:14px}
-.field{margin:14px 0}.label{font-size:12px;color:#9eb5c3;margin-bottom:6px}
-input[type=text],input[type=number]{width:100%;padding:11px;border-radius:10px;border:1px solid #345365;background:#102a3b;color:#fff}
-.primary{background:var(--accent);color:#052719}.secondary{background:#193447;color:#fff}.danger{background:var(--danger);color:#fff}.gold{background:var(--gold);color:#241a00}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.table{background:radial-gradient(circle at 50% 40%,#087049 0,#075b3a 45%,#06472e 100%);min-height:100vh;padding:12px;transition:background .7s ease}
-.table.final{background:radial-gradient(circle at 50% 30%,#9a2323 0,#6e1616 45%,#3d0c0c 100%)!important}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.badge{background:#0b2534dd;border:1px solid #477084;border-radius:999px;padding:7px 11px;font-size:12px}
-.players{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:12px auto;max-width:900px}
-.player{background:#092334dd;border:1px solid #3a5b6d;border-radius:14px;padding:8px 12px;min-width:110px;text-align:center;transition:transform .2s ease,box-shadow .2s ease}
-.player.current{border-color:var(--gold);box-shadow:0 0 0 2px #ffc85744;animation:glow 2.2s ease-in-out infinite}
-.player.me{border-color:#36dc91}.player.offline{opacity:.5}
-@keyframes glow{0%,100%{box-shadow:0 0 0 2px #ffc85744}50%{box-shadow:0 0 0 5px #ffc85722,0 0 20px #ffc85733}}
-.pname{font-weight:800;font-size:13px}.count{font-size:11px;color:#b9ccd5;margin-top:2px}
-.miniHand{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;max-width:150px;margin:6px 0 2px}
-.miniCard{width:13px;height:19px;border-radius:3px;background:repeating-linear-gradient(45deg,#1c62a1,#1c62a1 3px,#174e86 3px,#174e86 6px);border:1px solid #bcdcff;animation:miniIn .3s ease both}
-@keyframes miniIn{0%{opacity:0;transform:translateY(4px) scale(.85)}100%{opacity:1;transform:translateY(0) scale(1)}}
-.center{display:flex;justify-content:center;align-items:center;gap:26px;min-height:210px;flex-wrap:wrap}
-.pileWrap{text-align:center}.pileLabel{font-size:12px;color:#d1e0e5;margin-top:8px}
-.pile{width:88px;height:126px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px #0006;user-select:none}
-.draw{background:repeating-linear-gradient(45deg,#1c62a1,#1c62a1 7px,#174e86 7px,#174e86 12px);border:4px solid #d8ecff;color:#fff;font-size:12px;cursor:pointer;transition:opacity .2s ease}
-.draw.off{opacity:.35;pointer-events:none}
-.discard{background:#fff;color:#111;border:4px solid #d7e5ec;font-size:24px;font-weight:900}
-.handPanel{max-width:960px;margin:0 auto;width:100%;background:#071a25cc;border:1px solid #3b5968;border-radius:18px;padding:12px}
-.handTitle{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.hand{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;min-height:120px;justify-content:center}
-.card{width:68px;height:98px;border-radius:9px;user-select:none;box-shadow:0 6px 12px #0007;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease}
-.back{background:repeating-linear-gradient(45deg,#1c62a1,#1c62a1 6px,#174e86 6px,#174e86 11px);border:3px solid #d8ecff}
-.card.selected{transform:translateY(-8px);outline:3px solid var(--gold)}
-.card.reveal{background:#fff;color:#111;border:3px solid #ddd;flex-direction:column}
-.rank{font-size:22px;font-weight:900}.suit{font-size:20px}.red{color:#c71932}.black{color:#111}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.controls button{flex:1;min-width:110px}
-.controls button:disabled{opacity:.35;cursor:not-allowed}
-.hint{font-size:12px;color:#b8cbd4;margin-top:8px}
-.log{font-size:12px;max-height:90px;overflow-y:auto;background:#08281f;border-radius:8px;padding:8px;line-height:1.5;margin-top:8px}
-.modal{position:fixed;inset:0;background:#0009;z-index:20;overflow-y:auto;padding:24px 18px;text-align:center}
-.modal::before{content:'';display:inline-block;height:100%;vertical-align:middle}
-.modalBox{display:inline-block;vertical-align:middle;text-align:left;width:min(520px,100%);margin:2vh 0;background:#0b1e2b;border:1px solid #3e5d6e;border-radius:20px;padding:20px;box-shadow:0 20px 80px #000b}
-.modalCard{margin:15px auto;width:96px;height:140px}
-.timer{font-size:26px;text-align:center;color:var(--gold);font-weight:900}
-.footerBtns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:15px}
-.scoreRow{display:flex;justify-content:space-between;padding:11px;border-bottom:1px solid #254354}
-.winner{background:#0d7549;border-radius:12px}
-.choice{background:#132c3d;color:#dbe8ef;border:1px solid #345365;width:100%;margin:6px 0;text-align:left}
-.errBanner{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#ff5b67;color:#2a0000;padding:10px 16px;border-radius:10px;font-weight:700;z-index:40;box-shadow:0 6px 18px #0007}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Memory Cards — Online Multiplayer</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div id="lobbyScreen" class="screen">
-  <div class="setup">
-    <h1>Memory Cards</h1>
-    <p class="sub">Play with friends on separate devices. Everyone enters the same room code.</p>
-    <div class="field"><div class="label">YOUR NAME</div><input type="text" id="nameInput" maxlength="16" placeholder="Your name"></div>
-    <div class="field"><div class="label">ROOM CODE</div><input type="text" id="roomInput" maxlength="12" placeholder="e.g. FRIDAY" style="text-transform:uppercase"></div>
-    <button class="primary" style="width:100%" onclick="joinRoom()">Join / Create Room</button>
-    <div id="lobbyPlayers" class="row" style="margin-top:18px"></div>
-    <div class="field" id="cppField" style="display:none">
-      <div class="label">Cards per player</div>
-      <input type="number" id="cppInput" min="3" max="10" value="5" onchange="setCpp(this.value)">
+  <!-- ================= LOBBY SCREEN ================= -->
+  <div id="lobbyScreen" class="screen">
+    <div class="setup">
+      <h1>Memory Cards</h1>
+      <p class="sub">Play with friends on separate devices. Everyone enters the same room code.</p>
+      
+      <div class="field">
+        <div class="label">Your Name</div>
+        <input type="text" id="nameInput" maxlength="16" placeholder="Your name" autocomplete="nickname">
+      </div>
+
+      <div class="field">
+        <div class="label">Room Code</div>
+        <input type="text" id="roomInput" maxlength="12" placeholder="e.g. FRIDAY" style="text-transform:uppercase" autocomplete="off">
+      </div>
+
+      <button class="primary" id="joinBtn" style="width:100%" onclick="joinRoom()">Join / Create Room</button>
+
+      <div id="lobbyPlayers" class="row" style="margin-top:18px"></div>
+
+      <div class="field" id="cppField" style="display:none">
+        <div class="label">Cards per player</div>
+        <input type="number" id="cppInput" min="3" max="10" value="5" onchange="setCardsPerPlayer(this.value)">
+      </div>
+
+      <button class="gold hidden" id="startBtn" style="width:100%;margin-top:10px" onclick="SocketClient.emit('startGame')">Start Game</button>
     </div>
-    <button class="gold hidden" id="startBtn" style="width:100%;margin-top:10px" onclick="socket.emit('startGame')">Start Game</button>
   </div>
-</div>
 
-<div id="gameScreen" class="table hidden">
-  <div class="topbar">
-    <button class="secondary" onclick="confirmNewGame()">New Game</button>
-    <div id="turnBadge" class="badge">Turn</div>
-    <div id="statusBadge" class="badge"></div>
-  </div>
-  <div id="players" class="players"></div>
-  <div class="center">
-    <div class="pileWrap"><div id="drawPile" class="pile draw" onclick="socket.emit('draw')">DRAW<br>DECK</div><div class="pileLabel">Tap to pick</div></div>
-    <div class="pileWrap"><div id="discardPile" class="pile discard">—</div><div class="pileLabel">Discard pile</div></div>
-  </div>
-  <div class="handPanel">
-    <div class="handTitle"><b id="handTitle">Your cards</b><span id="selectedInfo" class="sub" style="margin:0"></span></div>
-    <div id="hand" class="hand"></div>
-    <div class="controls">
-      <button class="secondary" id="arrangeBtn" onclick="openArrange()">Arrange</button>
-      <button class="secondary" id="discardSelBtn" onclick="submitMatch()">Discard selected</button>
-      <button class="gold" id="callBtn" onclick="socket.emit('callReveal')">Call / Reveal</button>
-      <button class="primary" id="nextBtn" onclick="socket.emit('next')">Next ▶</button>
+  <!-- ================= GAME TABLE SCREEN ================= -->
+  <div id="gameScreen" class="table hidden">
+    <div class="topbar">
+      <button class="secondary" id="topbarNewGameBtn" onclick="UI.confirmNewGame()">New Game</button>
+      <div id="turnBadge" class="badge">Turn</div>
+      <div id="statusBadge" class="badge"></div>
     </div>
-    <div id="hint" class="hint"></div>
-    <div id="logBox" class="log"></div>
+
+    <!-- Opponent and table players -->
+    <div id="players" class="players"></div>
+
+    <!-- Center table: Draw deck and Discard pile -->
+    <div class="center">
+      <div class="pileWrap">
+        <div id="drawPile" class="pile draw" onclick="SocketClient.emit('draw')">DRAW<br>DECK</div>
+        <div class="pileLabel">Tap to pick</div>
+      </div>
+      <div class="pileWrap">
+        <div id="discardPile" class="pile discard">—</div>
+        <div class="pileLabel">Discard pile</div>
+      </div>
+    </div>
+
+    <!-- Local player's hand and controls -->
+    <div class="handPanel">
+      <div class="handTitle">
+        <b id="handTitle">Your cards</b>
+        <span id="selectedInfo" class="sub" style="margin:0"></span>
+      </div>
+
+      <div id="hand" class="hand"></div>
+
+      <!-- Control buttons: Separated into Gameplay and Reveal groups to prevent DOM destruction -->
+      <div id="controlsContainer" class="controls-container">
+        <!-- Active Gameplay Controls -->
+        <div id="gameplayControls" class="controls">
+          <button class="secondary" id="arrangeBtn" onclick="UI.openArrange()">Arrange</button>
+          <button class="secondary" id="discardSelBtn" onclick="UI.submitMatch()">Discard selected</button>
+          <button class="gold" id="callBtn" onclick="SocketClient.emit('callReveal')">Call / Reveal</button>
+          <button class="primary" id="nextBtn" onclick="SocketClient.emit('next')">Next ▶</button>
+        </div>
+
+        <!-- Endgame Reveal Controls -->
+        <div id="revealControls" class="controls hidden">
+          <button class="gold" id="showRankingBtn" style="width:100%" onclick="UI.showRanking()">Next — Show Ranking ▶</button>
+        </div>
+      </div>
+
+      <div id="hint" class="hint"></div>
+      <div id="logBox" class="log"></div>
+    </div>
   </div>
-</div>
 
-<div id="modal" class="modal hidden"><div id="modalBox" class="modalBox"></div></div>
-<div id="errBanner" class="errBanner hidden"></div>
+  <!-- ================= POPUP MODAL ================= -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div id="modalBox" class="modalBox"></div>
+  </div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-const $=id=>document.getElementById(id);
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-const socket = io();
+  <!-- ================= ERROR BANNER ================= -->
+  <div id="errBanner" class="errBanner hidden" role="alert"></div>
 
-let me = { pid:null, token:null, roomCode:null, name:null };
-let s = null; // last public state from server
-let selected = new Set();
-let arrangeSelected = null;
-
-// ---------- Persistence so a reload / reconnect returns you to your seat ----------
-function saveIdentity(){ localStorage.setItem('memcards_identity', JSON.stringify(me)); }
-function loadIdentity(){
-  try{ const v = JSON.parse(localStorage.getItem('memcards_identity')||'null'); if(v) me=v; }catch(e){}
-}
-loadIdentity();
-
-socket.on('connect', ()=>{
-  if(me.token && me.roomCode){ socket.emit('rejoin', {roomCode: me.roomCode, token: me.token}); }
-});
-
-function joinRoom(){
-  const name = $('nameInput').value.trim();
-  const roomCode = $('roomInput').value.trim().toUpperCase();
-  if(!name){ showErr('Enter your name first.'); return; }
-  if(!roomCode){ showErr('Enter a room code (any word your friends will all type).'); return; }
-  socket.emit('join', {roomCode, name});
-}
-function setCpp(v){ socket.emit('setCardsPerPlayer', {n:v}); }
-
-socket.on('joined', (data)=>{
-  me = data;
-  saveIdentity();
-});
-
-socket.on('errorMsg', ({message})=>showErr(message));
-function showErr(msg){
-  const el = $('errBanner');
-  el.textContent = msg;
-  el.classList.remove('hidden');
-  clearTimeout(showErr._t);
-  showErr._t = setTimeout(()=>el.classList.add('hidden'), 3500);
-}
-
-// ---------- Main state render ----------
-socket.on('state', (data)=>{
-  s = data;
-  render();
-});
-
-function myIndex(){ return s ? s.players.findIndex(p=>p.pid===me.pid) : -1; }
-function myEntry(){ const i=myIndex(); return i>=0 ? s.players[i] : null; }
-function isMyTurn(){ return s && s.players[s.currentIndex] && s.players[s.currentIndex].pid===me.pid; }
-
-function cardFaceHtml(c, extraClass){
-  const red = c.color==='red';
-  return `<div class="card reveal ${red?'red':''} ${extraClass||''}"><div class="rank">${c.r}</div><div class="suit">${c.s}</div></div>`;
-}
-function cardBackHtml(extraClass){ return `<div class="card back ${extraClass||''}"></div>`; }
-
-function render(){
-  if(!s) return;
-  if(s.phase==='lobby'){
-    $('lobbyScreen').classList.remove('hidden');
-    $('gameScreen').classList.add('hidden');
-    let ph='';
-    for(const p of s.players) ph+=`<div class="badge">${esc(p.name)}${p.pid===me.pid?' (you)':''}</div>`;
-    $('lobbyPlayers').innerHTML = ph;
-    $('cppField').style.display = s.players.length? 'block':'none';
-    $('cppInput').value = s.cardsPerPlayer;
-    $('startBtn').classList.toggle('hidden', s.players.length<2);
-    return;
-  }
-  $('lobbyScreen').classList.add('hidden');
-  $('gameScreen').classList.remove('hidden');
-  $('gameScreen').classList.toggle('final', !!s.finalActive);
-
-  if(s.phase==='reveal'){ renderReveal(); return; }
-
-  // players row
-  let ps='';
-  for(let i=0;i<s.players.length;i++){
-    const p = s.players[i];
-    const mini = Array.from({length:p.count}).map(()=>'<div class="miniCard"></div>').join('');
-    ps+=`<div class="player ${i===s.currentIndex?'current':''} ${p.pid===me.pid?'me':''} ${p.connected?'':'offline'}">
-      <div class="pname">${esc(p.name)}${p.pid===me.pid?' (you)':''}${i===s.currentIndex?' •':''}</div>
-      <div class="miniHand">${mini}</div>
-      <div class="count">${p.count} card${p.count===1?'':'s'}${p.connected?'':' · offline'}</div>
-    </div>`;
-  }
-  $('players').innerHTML = ps;
-
-  $('discardPile').innerHTML = s.discardTop ? cardFaceHtml(s.discardTop) : '—';
-  $('turnBadge').textContent = `Turn: ${s.currentName||'—'}`;
-  $('statusBadge').textContent = s.finalActive ? 'FINAL ROUND' : `Draw pile: ${s.deckCount}`;
-
-  const my = myEntry();
-  $('handTitle').textContent = my ? `Your cards (${my.count})` : 'Your cards';
-  const mine = isMyTurn();
-
-  let handHtml='';
-  if(my){
-    for(let i=0;i<my.count;i++){
-      handHtml += `<div class="card back ${selected.has(i)?'selected':''}" onclick="toggleSelect(${i})"></div>`;
-    }
-  }
-  $('hand').innerHTML = handHtml;
-  $('selectedInfo').textContent = selected.size? `${selected.size} selected`:'';
-
-  const drawOff = !mine || s.stage!=='start' || s.drawnThisTurn;
-  $('drawPile').classList.toggle('off', drawOff);
-
-  $('discardSelBtn').disabled = !mine || s.stage!=='start';
-  $('callBtn').disabled = !mine || s.stage!=='start';
-  $('nextBtn').disabled = !mine || s.stage!=='start';
-  $('arrangeBtn').disabled = !mine;
-
-  updateHint(mine);
-  $('logBox').innerHTML = (s.log||[]).slice(-10).map(l=>'• '+esc(l)).join('<br>');
-
-  if(mine){
-    if(s.stage==='qpower') openQPeekModal();
-    else if(s.stage==='jpower') openJSwapModal();
-    else closeModalIfAutoFlow();
-  }
-}
-
-function updateHint(mine){
-  if(!mine){ $('hint').textContent = `Waiting for ${s.currentName} to play…`; return; }
-  if(s.stage==='drawn'){ $('hint').textContent = 'Check the popup — keep or discard your drawn card.'; return; }
-  if(s.stage==='qpower'){ $('hint').textContent = `Q Power: ${s.qCount} peek(s) left.`; return; }
-  if(s.stage==='jpower'){ $('hint').textContent = `J Power: ${s.jCount} swap(s) left.`; return; }
-  if(s.drawnThisTurn){ $('hint').textContent = 'You already drew this turn. Select more matches, or press Next when done.'; return; }
-  $('hint').textContent = s.discardTop
-    ? `Open card: ${s.discardTop.r}${s.discardTop.s}. Select card(s) you remember matching it, or tap the draw deck.`
-    : 'Tap the draw deck to begin your turn.';
-}
-
-let autoModalOpen=null; // tracks which auto-flow modal is currently shown, to avoid re-render fighting
-function closeModalIfAutoFlow(){
-  if(autoModalOpen==='q' || autoModalOpen==='j'){ closeModal(); autoModalOpen=null; }
-}
-
-function toggleSelect(i){
-  if(selected.has(i)) selected.delete(i); else selected.add(i);
-  render();
-}
-function submitMatch(){
-  if(selected.size===0){ showErr('No cards selected. Please select at least one card.'); return; }
-  socket.emit('matchSelected', {positions:[...selected]});
-  selected.clear();
-}
-
-// ---------- Drawn card popup ----------
-socket.on('yourDrawnCard', ({card})=>{
-  openModal(`<h2>You drew a card</h2>${cardFaceHtml(card,'modalCard')}
-    <p class="sub" style="text-align:center">Keep it or discard it.</p>
-    <div class="footerBtns">
-      <button class="danger" onclick="closeModal();socket.emit('discardDrawn')">Discard drawn</button>
-      <button class="primary" onclick="openInsertPicker()">Keep — choose position</button>
-    </div>`);
-});
-function openInsertPicker(){
-  const my = myEntry();
-  const n = my ? my.count : 0;
-  let btns='';
-  for(let i=0;i<=n;i++) btns += `<button class="secondary" style="margin:3px" onclick="closeModal();socket.emit('keepDrawn',{position:${i}})">Insert @ ${i+1}</button>`;
-  openModal(`<h2>Choose where to insert it</h2><p class="sub">Your hand will grow by one card at this slot.</p><div class="row" style="justify-content:center">${btns}</div>`);
-}
-
-// ---------- Discard reveal popup ----------
-socket.on('discardReveal', ({cards, wrongCount, penaltyCount, requiredRank, drewOrInserted})=>{
-  const revealHtml = cards.length ? `<div class="hand">${cards.map(c=>cardFaceHtml(c)).join('')}</div>` : '';
-  const ruleText = drewOrInserted
-    ? 'Because you drew first, all cards in this action had to share the same rank as the first one you selected.'
-    : `Because you didn't draw, every selected card had to match the open card <b>${esc(requiredRank||'?')}</b>.`;
-  const wrongText = wrongCount>0 ? `<br><b>${penaltyCount} penalty card(s)</b> added because ${wrongCount} selection(s) were wrong.` : '';
-  openModal(`<h2>${wrongCount? 'Discard completed with penalty':'Discard successful'}</h2>
-    ${revealHtml}
-    <p>${cards.length} card(s) discarded.${wrongText}</p>
-    <p class="hint">${ruleText}</p>
-    <p class="hint">Remember another matching card? Select it and discard again before pressing Next.</p>
-    <button class="primary" style="width:100%" onclick="closeModal()">Continue</button>`);
-});
-
-// ---------- Q power ----------
-function openQPeekModal(){
-  if(autoModalOpen==='q') return; // avoid re-opening chooser while a peek is displaying
-  autoModalOpen='q';
-  const my = myEntry();
-  let cards='';
-  for(let i=0;i<my.count;i++) cards += `<div class="card back" onclick="qPeekPick(${i})"></div>`;
-  openModal(`<h2>Q Power — Peek at one of your cards</h2>
-    <p>${s.qCount} peek(s) available. Choose one of your own face-down cards.</p>
-    <div class="hand">${cards}</div>
-    <p class="hint">Only you should look — the card hides again after a few seconds.</p>`);
-}
-function qPeekPick(i){ socket.emit('qPeekChoose', {position:i}); }
-socket.on('yourQPeek', ({card, remaining})=>{
-  openModal(`<h2>Peek</h2>${cardFaceHtml(card,'modalCard')}<div class="timer" id="peekTimer">3</div><p class="sub" style="text-align:center">Remember this card and its position.</p>`);
-  let t=3;
-  const timer=setInterval(()=>{
-    t--; const el=$('peekTimer'); if(el) el.textContent=t;
-    if(t<=0){ clearInterval(timer); if(remaining>0){ openQPeekModal(); } else { closeModal(); autoModalOpen=null; } }
-  },1000);
-});
-
-// ---------- J power ----------
-function openJSwapModal(){
-  if(autoModalOpen==='j') return;
-  autoModalOpen='j';
-  let opts='';
-  for(const p of s.players){
-    if(p.pid===me.pid) continue;
-    opts += `<button class="choice" onclick="jChooseTarget('${p.pid}','${esc(p.name)}',${p.count})">${esc(p.name)} (${p.count} cards)</button>`;
-  }
-  openModal(`<h2>J Power — Blind swap</h2>
-    <p>${s.jCount} swap(s) available. Pick a player to swap one of your cards with. Neither of you sees either card.</p>
-    <div>${opts}</div>
-    <div class="footerBtns"><button class="secondary" onclick="socket.emit('jSwapSkip')">Skip this swap</button></div>`);
-}
-function jChooseTarget(targetPid, targetName, targetCount){
-  const my = myEntry();
-  let cards='';
-  for(let i=0;i<my.count;i++) cards += `<div class="card back" onclick="jChooseOwn('${targetPid}','${esc(targetName)}',${targetCount},${i})"></div>`;
-  openModal(`<h2>Choose your card</h2><p class="sub">Select one of your cards to swap with ${esc(targetName)}.</p><div class="hand">${cards}</div>`);
-}
-function jChooseOwn(targetPid, targetName, targetCount, ownPos){
-  let cards='';
-  for(let i=0;i<targetCount;i++) cards += `<div class="card back" onclick="jFinish('${targetPid}',${ownPos},${i})"></div>`;
-  openModal(`<h2>Choose their card</h2><p class="sub">Select one of ${esc(targetName)}'s cards to swap with yours.</p><div class="hand">${cards}</div>`);
-}
-function jFinish(targetPid, ownPos, theirPos){
-  socket.emit('jSwap', {targetPid, ownPos, theirPos});
-  closeModal();
-  autoModalOpen=null;
-}
-
-// ---------- Arrange ----------
-function openArrange(){
-  arrangeSelected = null;
-  renderArrange();
-}
-function renderArrange(){
-  const my = myEntry();
-  let cards='';
-  for(let i=0;i<my.count;i++){
-    cards += `<div class="card back ${arrangeSelected===i?'selected':''}" onclick="arrangeTap(${i})" style="position:relative">
-      <span style="position:absolute;bottom:4px;right:6px;font-size:11px;background:#0007;padding:1px 5px;border-radius:6px">${i+1}</span>
-    </div>`;
-  }
-  const hint = arrangeSelected===null ? 'Tap a card to pick it up.' : `Slot ${arrangeSelected+1} picked up — tap where to drop it.`;
-  openModal(`<h2>Arrange your cards</h2>
-    <p class="sub">Cards stay hidden — only slot numbers show. Tap to pick up, tap again elsewhere to drop.</p>
-    <div class="hand">${cards}</div><p class="hint">${hint}</p>
-    <button class="primary" style="width:100%;margin-top:10px" onclick="closeModal()">Done</button>`);
-}
-function arrangeTap(i){
-  if(arrangeSelected===null){ arrangeSelected=i; }
-  else if(arrangeSelected===i){ arrangeSelected=null; }
-  else { socket.emit('arrangeMove', {from:arrangeSelected, to:i}); arrangeSelected=null; }
-  renderArrange();
-}
-
-// ---------- Reveal / ranking ----------
-function renderReveal(){
-  $('turnBadge').textContent = 'All cards revealed!';
-  $('statusBadge').textContent = '';
-  $('handTitle').textContent = '';
-  $('hand').innerHTML='';
-  $('selectedInfo').textContent='';
-  $('hint').textContent='';
-  let ps='';
-  for(let i=0;i<s.players.length;i++){
-    const p=s.players[i];
-    const total = s.scores[i];
-    ps+=`<div class="player ${p.pid===me.pid?'me':''}"><div class="pname">${esc(p.name)}</div>
-      <div class="hand" style="margin-top:8px">${s.hands[i].map(c=>cardFaceHtml(c)).join('')}</div>
-      <div class="count">${total} pts</div></div>`;
-  }
-  $('players').innerHTML = ps;
-  const controls = document.querySelector('.controls');
-  controls.innerHTML = `<button class="gold" style="width:100%" onclick="showRanking()">Next — Show Ranking ▶</button>`;
-}
-function showRanking(){
-  const order = s.players.map((p,i)=>({name:p.name, score:s.scores[i]})).sort((a,b)=>a.score-b.score);
-  const min = order[0].score;
-  const rows = order.map((o,k)=>`<div class="scoreRow ${o.score===min?'winner':''}"><span>${k+1}. ${esc(o.name)}${o.score===min?' 🏆':''}</span><b>${o.score}</b></div>`).join('');
-  openModal(`<h2>Final Ranking</h2><p class="sub">Lowest total wins.</p>${rows}
-    <div class="footerBtns">
-      <button class="secondary" onclick="closeModal();socket.emit('playAgain')">Play Again (Same Players)</button>
-      <button class="primary" onclick="closeModal();socket.emit('newGame')">New Game</button>
-    </div>`);
-}
-
-function confirmNewGame(){
-  openModal(`<h2>Start over?</h2><p>This resets the room for everyone.</p>
-    <div class="footerBtns"><button class="secondary" onclick="closeModal()">Cancel</button>
-    <button class="danger" onclick="closeModal();socket.emit('newGame')">New game</button></div>`);
-}
-
-function openModal(html){ $('modalBox').innerHTML = html; $('modal').classList.remove('hidden'); }
-function closeModal(){ $('modal').classList.add('hidden'); }
-</script>
+  <!-- ================= SCRIPTS ================= -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/constants.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/socketClient.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

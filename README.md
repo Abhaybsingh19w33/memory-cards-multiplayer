@@ -1,54 +1,62 @@
 # Memory Cards — Multiplayer
 
-A real backend (Node.js + Express + Socket.IO). Each player's browser only ever
-receives their own hand over the network — other players' cards are never
-sent to your device at all, so this is genuinely hidden, not just hidden by
-convention.
+A real-time, hidden-information multiplayer card game powered by **Node.js, Express, and Socket.IO** with a clean, responsive web frontend.
 
-## Run it (needs Node.js installed — nodejs.org)
+Each player's browser only ever receives their own hand over the network — opponents' cards are never sent to your device until the round concludes.
 
-```
+---
+
+## Quick Start
+
+```bash
+# 1. Install dependencies
 npm install
+
+# 2. Run automated test suite
+npm test
+
+# 3. Start the server
 npm start
 ```
 
-This starts the server on `http://localhost:3000`. On your own laptop, open
-that URL in a browser and it works immediately for anyone else on the same
-Wi-Fi (they'd use your laptop's local IP instead of `localhost`, e.g.
-`http://192.168.1.23:3000`).
+The game server starts at `http://localhost:3000`. Open this URL across multiple browser windows or share your local IP with friends on the same Wi-Fi network.
 
-## Making it reachable by friends elsewhere tonight
+---
 
-Easiest zero-signup option — in a second terminal, while the server is running:
+## Playing the Game
 
-```
-npx localtunnel --port 3000
-```
+1. **Join a Room**: Enter your name and a shared room code (e.g. `FRIDAY`).
+2. **Configure & Start**: Once 2 or more players join, set the cards-per-player (3–10) and hit **Start Game**.
+3. **Turn Actions**:
+   - **Draw**: Tap the draw deck to pick a card, then choose to discard it or slot it into your hand.
+   - **Matching Discard**: Select face-down cards you remember matching either the open card or your drawn card. Wrong guesses earn 2 penalty cards!
+   - **Special Powers**:
+     - **Queen (Q)**: Grants a private, timed peek at one of your face-down cards.
+     - **Jack (J)**: Allows a blind swap of a card with an opponent (or skip).
+   - **Arrange**: Re-order your hand slots freely to keep track of your cards.
+4. **Endgame & Scoring**:
+   - Call **Reveal** or reduce your hand to 0 cards to trigger the final round.
+   - Points: **Red Kings (♥, ♦) = -2 pts**, **Black Kings (♠, ♣) = 13 pts**, **Aces = 1 pt**, **Numbers = face value**.
+   - Lowest score wins the trophy 🏆!
+5. **Play Again**: Click "Play Again" from the ranking modal to seamlessly deal a fresh round with the same players.
 
-This prints a public URL like `https://short-word-123.loca.lt`. Send that link
-to your friends. First-time visitors will see a small interstitial page from
-localtunnel — they just click "Click to Continue" and land in the game.
+---
 
-(Alternative if that ever acts up: `npx ngrok http 3000`, which requires a
-free ngrok account and auth token but tends to be more stable.)
+## Documentation Suite
 
-Keep both terminal windows open for the whole game — closing either one ends
-the session for everyone.
+Comprehensive technical documentation is available in the [`docs/`](file:///docs/) directory:
 
-## Playing
+- 📐 **[System Architecture](docs/ARCHITECTURE.md)**: Modular design, subsystem breakdown, before vs after refactoring.
+- 🌟 **[Golden Rules](docs/GOLDEN_RULES.md)**: Authoritative networking, non-destructive DOM rendering, and security principles.
+- 🛠️ **[Bug Post-Mortem: Play Again Resolution](docs/BUG_POSTMORTEM_PLAY_AGAIN.md)**: Deep dive into the button failure bug, root cause, and architectural fix.
+- 📡 **[Socket.IO API & Events Catalog](docs/API_AND_EVENTS.md)**: Complete reference of all client-server events and schemas.
 
-1. Everyone opens the link and enters their name plus the **same room code**
-   (any word works, e.g. `FRIDAY`) to land in the same game.
-2. Once 2+ people have joined, whoever's there can set cards-per-player and
-   hit **Start Game**.
-3. Everything else — drawing, J/Q powers, penalties, Call/Reveal, Arrange —
-   works exactly like the single-device version, just over the network.
-
-## Notes
-
-- If someone's phone locks or loses signal mid-game, reopening the same link
-  automatically reconnects them to their same seat and hand (their browser
-  remembers a private token in local storage).
-- "New Game" resets the whole room back to the lobby for everyone.
-- "Play Again" (from the ranking screen) re-deals a fresh round with the same
-  players, no need to re-enter names.
+### Gameplay Scenarios & Code Segments
+- [Scenario 1: Lobby & Matchmaking](docs/scenarios/01_LOBBY_AND_MATCHMAKING.md)
+- [Scenario 2: Deck & Card Mechanics](docs/scenarios/02_DECK_AND_CARD_MECHANICS.md)
+- [Scenario 3: Turn Lifecycle & Drawing](docs/scenarios/03_TURN_LIFECYCLE_AND_DRAWING.md)
+- [Scenario 4: Matching & Discard Rules](docs/scenarios/04_MATCHING_AND_DISCARD_RULES.md)
+- [Scenario 5: Special Powers (Q & J)](docs/scenarios/05_SPECIAL_POWERS_Q_AND_J.md)
+- [Scenario 6: Call Reveal & Scoring](docs/scenarios/06_CALL_REVEAL_AND_SCORING.md)
+- [Scenario 7: Round Reset & Play Again](docs/scenarios/07_ROUND_RESET_AND_PLAY_AGAIN.md)
+- [Scenario 8: Client UI Architecture & Synchronization](docs/scenarios/08_CLIENT_UI_AND_SYNCHRONIZATION.md)
