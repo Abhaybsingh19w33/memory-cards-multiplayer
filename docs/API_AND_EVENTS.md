@@ -85,15 +85,15 @@ Inserts the drawn card into the player's hand at a chosen slot.
 
 ### `matchSelected`
 Submits one or more cards from hand to match against either:
-1. The first card selected (if player drew/inserted a card this turn).
-2. The open discard pile card (if player has not drawn yet).
+1. The first card selected (if active player drew/inserted a card this turn).
+2. The open discard pile card (if active player has not drawn yet, or if discarding out of turn).
 - **Payload**:
   ```json
   {
     "positions": [0, 2]
   }
   ```
-- **Validation**: Must be player's turn, `stage === 'start'`, valid array of hand indices.
+- **Validation**: Active gameplay phase (`normal` or `final`), valid array of player's hand indices. If active player, must not be in `drawn`, `qpower`, or `jpower` stages. Out-of-turn players may discard matching cards at any time.
 
 ---
 
@@ -139,7 +139,7 @@ Reorders cards within the player's own hand without flipping them.
     "to": 3
   }
   ```
-- **Validation**: Must be player's turn, valid bounds.
+- **Validation**: Active gameplay phase (`normal` or `final`), valid index bounds within player's own hand. Available to all players at all times.
 
 ---
 

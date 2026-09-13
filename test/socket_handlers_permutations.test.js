@@ -190,3 +190,48 @@ test('Socket Protocol Permutations - Disconnect Broadcast Handling', () => {
   assert.strictEqual(lastBroadcast.payload.players[1].connected, false);
 });
 
+test('Socket Protocol Permutations - Out-of-Turn MatchSelected Handled via Sockets', () => {
+  const roomCode = 'OOT_DISC';
+  const { io, socket1, socket2, room } = setupSocketSuite(roomCode);
+  socket1.trigger('startGame');
+
+  // Open card is 6
+  room.discard = [createCard('6', 6, '♠', 'black')];
+  // Inactive player socket2 has matching 6
+  room.players[1].hand = [createCard('6', 6, '♥', 'red'), createCard('K', 13, '♣', 'black')];
+
+  // socket2 triggers matchSelected out of turn
+  socket2.trigger('matchSelected', { positions: [0] });
+
+  // socket2 should receive discardReveal on their private channel
+  const revealEmits = io.emitted.filter((e) => e.channel === socket2.data.pid && e.event === 'discardReveal');
+  assert.strictEqual(revealEmits.length, 1);
+  assert.strictEqual(revealEmits[0].payload.requiredRank, '6');
+  assert.strictEqual(revealEmits[0].payload.isOutOfTurn, true);
+
+  // Room broadcast received with updated card count
+  const stateBroadcasts = io.emitted.filter((e) => e.channel === roomCode && e.event === 'state');
+  const latestState = stateBroadcasts[stateBroadcasts.length - 1].payload;
+  assert.strictEqual(latestState.players[1].count, 1);
+});
+
+test('Socket Protocol Permutations - Out-of-Turn ArrangeMove Handled via Sockets', () => {
+  const roomCode = 'OOT_ARR';
+  const { io, socket1, socket2, room } = setupSocketSuite(roomCode);
+  socket1.trigger('startGame');
+
+  const c0 = createCard('2', 2, '♦', 'red');
+  const c1 = createCard('9', 9, '♠', 'black');
+  room.players[1].hand = [c0, c1];
+
+  // socket2 arranges hand out of turn
+  socket2.trigger('arrangeMove', { from: 0, to: 1 });
+
+  assert.strictEqual(room.players[1].hand[0].uid, c1.uid);
+  assert.strictEqual(room.players[1].hand[1].uid, c0.uid);
+
+  const stateBroadcasts = io.emitted.filter((e) => e.channel === roomCode && e.event === 'state');
+  assert.ok(stateBroadcasts.length > 0);
+});
+
+

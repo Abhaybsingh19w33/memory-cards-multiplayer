@@ -50,9 +50,13 @@ test('Scenario 3 Permutations - Turn Authorization & Inactive Player Rejection M
   assert.strictEqual(p2Keep.success, false);
   assert.strictEqual(p2Keep.error, 'Nothing to place.');
 
-  // Inactive players cannot arrange hand
+  // Inactive players CAN arrange hand at any time during active play
   const p2Arr = GameEngine.arrangeMove(room, p2.pid, 0, 1);
-  assert.strictEqual(p2Arr.success, false);
+  assert.strictEqual(p2Arr.success, true, 'Inactive player should be able to arrange cards');
+
+  // Non-existent players cannot arrange hand
+  const invalidArr = GameEngine.arrangeMove(room, 'non-existent-pid', 0, 1);
+  assert.strictEqual(invalidArr.success, false);
 });
 
 test('Scenario 3 Permutations - Draw Action Stage Machine & Depletion Matrix', () => {

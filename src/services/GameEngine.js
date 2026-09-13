@@ -128,7 +128,7 @@ class GameEngine {
    * Executes a matching discard action for selected hand positions.
    * Handles both:
    * 1. Turn discard after drawing/inserting (first card establishes target rank).
-   * 2. Matching discard without drawing (matches against current open discard card).
+   * 2. Matching discard without drawing or out of turn (matches against current open discard card).
    * Calculates correct matches, wrong guesses, and applies 2 penalty cards per wrong guess.
    * 
    * @param {Room} room 
@@ -137,14 +137,24 @@ class GameEngine {
    * @returns {{ success: boolean, result?: object, error?: string }}
    */
   static matchSelected(room, pid, positions) {
-    if (!room.isMyTurn(pid) || room.stage !== TURN_STAGES.START) {
+    if (room.phase !== GAME_PHASES.NORMAL && room.phase !== GAME_PHASES.FINAL) {
       return { success: false, error: 'You cannot do that right now.' };
     }
+
+    const player = room.findPlayer(pid);
+    if (!player) {
+      return { success: false, error: 'You cannot do that right now.' };
+    }
+
+    const isMyTurn = room.isMyTurn(pid);
+    if (isMyTurn && room.stage !== TURN_STAGES.START) {
+      return { success: false, error: 'You cannot do that right now.' };
+    }
+
     if (!Array.isArray(positions) || positions.length === 0) {
       return { success: false, error: 'No cards selected. Please select at least one card.' };
     }
 
-    const player = room.currentPlayer();
     const indices = [...new Set(positions)]
       .filter((i) => Number.isInteger(i) && i >= 0 && i < player.hand.length)
       .sort((a, b) => a - b);
@@ -153,7 +163,7 @@ class GameEngine {
       return { success: false, error: 'No valid cards selected.' };
     }
 
-    const drewOrInserted = room.turnDiscardStarted === true;
+    const drewOrInserted = isMyTurn && room.turnDiscardStarted === true;
     const correct = [];
     const wrong = [];
     let requiredRank = null;
@@ -169,6 +179,9 @@ class GameEngine {
     } else {
       const topOpen = room.getOpenCard();
       requiredRank = topOpen ? topOpen.r : null;
+      if (!requiredRank) {
+        return { success: false, error: 'No open card on discard pile to match.' };
+      }
       for (const i of indices) {
         const card = player.hand[i];
         if (requiredRank && card.r === requiredRank) correct.push(i);
@@ -195,15 +208,22 @@ class GameEngine {
       }
     }
 
-    room.turnDiscardStarted = false;
-    let logMsg = `${player.name} played ${selectedCards.length} card(s) from their hand.`;
+    if (isMyTurn) {
+      room.turnDiscardStarted = false;
+    }
+
+    let logMsg = isMyTurn
+      ? `${player.name} played ${selectedCards.length} card(s) from their hand.`
+      : `${player.name} discarded ${selectedCards.length} card(s) out of turn matching open card ${requiredRank}.`;
     if (wrong.length > 0) {
       logMsg += ` ${wrong.length} were wrong — ${penaltyCount} penalty card(s) added.`;
     }
     room.addLog(logMsg);
 
-    this.queuePowersForCards(room, selectedCards);
-    this.checkZero(room);
+    if (isMyTurn) {
+      this.queuePowersForCards(room, selectedCards);
+    }
+    this.checkZero(room, player);
 
     return {
       success: true,
@@ -213,6 +233,7 @@ class GameEngine {
         penaltyCount,
         requiredRank,
         drewOrInserted,
+        isOutOfTurn: !isMyTurn,
       },
     };
   }
@@ -336,22 +357,27 @@ class GameEngine {
 
   /**
    * Rearranges a card in player's own hand without exposing its face.
+   * Can be performed by any player in the room at any time during active play.
    * 
    * @param {Room} room 
    * @param {string} pid 
    * @param {number} from 
    * @param {number} to 
-   * @returns {{ success: boolean }}
+   * @returns {{ success: boolean, error?: string }}
    */
   static arrangeMove(room, pid, from, to) {
-    if (!room.isMyTurn(pid)) return { success: false };
+    if (room.phase !== GAME_PHASES.NORMAL && room.phase !== GAME_PHASES.FINAL) {
+      return { success: false, error: 'Cannot arrange outside of active play.' };
+    }
 
-    const player = room.currentPlayer();
+    const player = room.findPlayer(pid);
+    if (!player) return { success: false, error: 'Player not found.' };
+
     const f = parseInt(from, 10);
     const t = parseInt(to, 10);
 
     if (!(f >= 0 && f < player.hand.length) || !(t >= 0 && t < player.hand.length)) {
-      return { success: false };
+      return { success: false, error: 'Invalid card position.' };
     }
 
     const item = player.hand.splice(f, 1)[0];
@@ -380,15 +406,16 @@ class GameEngine {
   }
 
   /**
-   * Checks if the active player has reduced their hand to 0 cards, triggering final countdown.
+   * Checks if a player has reduced their hand to 0 cards, triggering final countdown.
    * 
    * @param {Room} room 
+   * @param {Player} [player] - Target player who performed discard (defaults to currentPlayer)
    */
-  static checkZero(room) {
-    const cp = room.currentPlayer();
-    if (cp && cp.hand.length === 0 && room.zeroPlayer === null) {
-      room.zeroPlayer = cp.pid;
-      room.addLog(`${cp.name} is down to 0 cards. Play continues until it comes back around to them.`);
+  static checkZero(room, player) {
+    const target = player || room.currentPlayer();
+    if (target && target.hand.length === 0 && room.zeroPlayer === null) {
+      room.zeroPlayer = target.pid;
+      room.addLog(`${target.name} is down to 0 cards. Play continues until it comes back around to them.`);
     }
   }
 

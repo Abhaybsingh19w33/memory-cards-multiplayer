@@ -77,3 +77,9 @@ When the active player finishes their actions and clicks **Next ▶**:
    ```
 5. Broadcasts the updated state so all clients update active player badges and hints.
 
+---
+
+## 4. Omnipresent Hand Management & Out-of-Turn Discards
+While turn-advancement and drawing are strictly sequential:
+1. **Arrange Hand (`arrangeMove`)**: Any player may reorganize cards within their own hand at any time during `normal` and `final` phases without waiting for their turn.
+2. **Out-of-Turn Discard (`matchSelected`)**: Any player may discard cards matching the current open discard pile card at any time. Out-of-turn discards do not modify turn rotation or skip the active player.

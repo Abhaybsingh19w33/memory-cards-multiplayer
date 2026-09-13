@@ -72,10 +72,22 @@ To prevent this:
 
 ---
 
-## 5. Visual Design System & Card Ergonomics
+## 5. Control Bar Availability Matrix
+
+Action buttons are rendered deterministically without DOM teardown (`#gameplayControls` vs `#revealControls`).
+
+| Button | ID | Enabled Condition | Description |
+| :--- | :--- | :--- | :--- |
+| **Arrange** | `#arrangeBtn` | `hasCards && isPlayPhase` | **Always available** to all players during active gameplay. |
+| **Discard selected** | `#discardSelBtn` | `hasCards && isPlayPhase` | **Always available** to all players during active gameplay (supports out-of-turn discards). |
+| **Call / Reveal** | `#callBtn` | `isMyTurn && stage === 'start'` | Only available to active player at turn start. |
+| **Next ▶** | `#nextBtn` | `isMyTurn && stage === 'start'` | Only available to active player at turn start. |
+
+---
+
+## 6. Visual Design System & Card Ergonomics
 
 1. **Card Aspect Ratio**: Fixed $68\text{px} \times 98\text{px}$ cards with $9\text{px}$ border-radius, styled with repeating linear gradients to simulate casino felt table textures and bicycle-back playing cards.
 2. **Card Selection**: When tapped, cards translate $-8\text{px}$ upwards with a vibrant gold outline (`--gold: #ffc857`), providing clear tactical feedback on touchscreens and mobile devices.
 3. **Final Round Ambience**: When someone calls Reveal, `.table.final` applies a deep crimson radial gradient transition, clearly signaling the high-stakes final turns to all players.
 4. **XSS Protection**: All user names, room codes, and logs are escaped with `UI.esc()` before rendering.
-

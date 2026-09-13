@@ -244,6 +244,9 @@ const UI = {
   renderControls(s) {
     const mine = Store.isMyTurn();
     const isStartStage = s.stage === UI_STAGES.START;
+    const my = Store.myEntry();
+    const hasCards = Boolean(my && my.count > 0);
+    const isPlayPhase = s.phase === UI_PHASES.NORMAL || s.phase === UI_PHASES.FINAL;
 
     // Show gameplay controls and hide reveal controls
     const gameplayControls = this.$('gameplayControls');
@@ -257,10 +260,13 @@ const UI = {
     const nextBtn = this.$('nextBtn');
     const arrangeBtn = this.$('arrangeBtn');
 
-    if (discardSelBtn) discardSelBtn.disabled = !mine || !isStartStage;
+    // Arrange and Discard selected are available at all times during active gameplay
+    if (discardSelBtn) discardSelBtn.disabled = !hasCards || !isPlayPhase;
+    if (arrangeBtn) arrangeBtn.disabled = !hasCards || !isPlayPhase;
+
+    // Call and Next remain restricted to the active player in start stage
     if (callBtn) callBtn.disabled = !mine || !isStartStage;
     if (nextBtn) nextBtn.disabled = !mine || !isStartStage;
-    if (arrangeBtn) arrangeBtn.disabled = !mine;
   },
 
   /**
@@ -569,6 +575,7 @@ const UI = {
    * Opens the Arrange mode dialog.
    */
   openArrange() {
+    Store.selected.clear();
     Store.arrangeSelected = null;
     this.renderArrange();
   },

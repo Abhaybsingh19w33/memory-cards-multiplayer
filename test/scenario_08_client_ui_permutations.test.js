@@ -55,14 +55,15 @@ test('Scenario 8 Permutations - Button Disabled / Enabled State Matrix', () => {
 
   const testMatrix = [
     // [isMyTurn, stage, phase, expDiscard, expCall, expNext, expArrange]
+    // Arrange & Discard selected are always available (disabled: false) during normal and final play for players with cards
     { isTurn: true, stage: 'start', phase: 'normal', expDiscard: false, expCall: false, expNext: false, expArrange: false },
-    { isTurn: true, stage: 'drawn', phase: 'normal', expDiscard: true, expCall: true, expNext: true, expArrange: false },
-    { isTurn: true, stage: 'qpower', phase: 'normal', expDiscard: true, expCall: true, expNext: true, expArrange: false },
-    { isTurn: true, stage: 'jpower', phase: 'normal', expDiscard: true, expCall: true, expNext: true, expArrange: false },
-    { isTurn: false, stage: 'start', phase: 'normal', expDiscard: true, expCall: true, expNext: true, expArrange: true },
-    { isTurn: false, stage: 'drawn', phase: 'normal', expDiscard: true, expCall: true, expNext: true, expArrange: true },
+    { isTurn: true, stage: 'drawn', phase: 'normal', expDiscard: false, expCall: true, expNext: true, expArrange: false },
+    { isTurn: true, stage: 'qpower', phase: 'normal', expDiscard: false, expCall: true, expNext: true, expArrange: false },
+    { isTurn: true, stage: 'jpower', phase: 'normal', expDiscard: false, expCall: true, expNext: true, expArrange: false },
+    { isTurn: false, stage: 'start', phase: 'normal', expDiscard: false, expCall: true, expNext: true, expArrange: false },
+    { isTurn: false, stage: 'drawn', phase: 'normal', expDiscard: false, expCall: true, expNext: true, expArrange: false },
     { isTurn: true, stage: 'start', phase: 'final', expDiscard: false, expCall: false, expNext: false, expArrange: false },
-    { isTurn: false, stage: 'start', phase: 'final', expDiscard: true, expCall: true, expNext: true, expArrange: true },
+    { isTurn: false, stage: 'start', phase: 'final', expDiscard: false, expCall: true, expNext: true, expArrange: false },
   ];
 
   for (let i = 0; i < testMatrix.length; i++) {
