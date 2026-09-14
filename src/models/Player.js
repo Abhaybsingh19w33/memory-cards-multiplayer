@@ -22,6 +22,8 @@ class Player {
     this.hand = [];
     this.socketId = socketId;
     this.connected = connected;
+    this.lastAction = null;
+    this.pendingInsertPos = null;
   }
 
   /**
@@ -37,6 +39,7 @@ class Player {
       name: this.name,
       count: this.hand.length,
       connected: this.connected,
+      lastAction: this.lastAction || null,
     };
   }
 
@@ -45,6 +48,8 @@ class Player {
    */
   clearHand() {
     this.hand = [];
+    this.lastAction = null;
+    this.pendingInsertPos = null;
   }
 }
 

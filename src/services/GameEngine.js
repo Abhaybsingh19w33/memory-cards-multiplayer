@@ -89,6 +89,12 @@ class GameEngine {
       return { success: false, error: 'Nothing to discard.' };
     }
 
+    const player = room.currentPlayer();
+    if (player) {
+      player.pendingInsertPos = null;
+      player.lastAction = null;
+    }
+
     const card = room.drawn;
     room.discard.push(card);
     room.drawn = null;
@@ -105,7 +111,7 @@ class GameEngine {
    * @param {Room} room 
    * @param {string} pid 
    * @param {number} position 
-   * @returns {{ success: boolean, error?: string }}
+   * @returns {{ success: boolean, insertedPos?: number, error?: string }}
    */
   static keepDrawn(room, pid, position) {
     if (!room.isMyTurn(pid) || room.stage !== TURN_STAGES.DRAWN || !room.drawn) {
@@ -116,12 +122,19 @@ class GameEngine {
     const idx = Math.max(0, Math.min(player.hand.length, parseInt(position, 10) || 0));
 
     player.hand.splice(idx, 0, room.drawn);
+    player.pendingInsertPos = idx;
+    player.lastAction = {
+      type: 'insert',
+      insertedPos: idx,
+      timestamp: Date.now(),
+    };
+
     room.drawn = null;
     room.turnDiscardStarted = true;
     room.stage = TURN_STAGES.START;
 
     room.addLog(`${player.name} drew a card and slotted it into their hand.`);
-    return { success: true };
+    return { success: true, insertedPos: idx };
   }
 
   /**
@@ -225,8 +238,37 @@ class GameEngine {
     }
     this.checkZero(room, player);
 
+    let highlight = null;
+    if (drewOrInserted && player.pendingInsertPos !== null && player.pendingInsertPos !== undefined) {
+      let finalInsertedPos = null;
+      if (indices.includes(player.pendingInsertPos)) {
+        finalInsertedPos = null;
+      } else {
+        const shift = indices.filter((i) => i < player.pendingInsertPos).length;
+        finalInsertedPos = player.pendingInsertPos - shift;
+      }
+      player.lastAction = {
+        type: 'draw_dispose',
+        insertedPos: finalInsertedPos,
+        disposedPos: indices[0],
+        disposedPositions: indices,
+        timestamp: Date.now(),
+      };
+      player.pendingInsertPos = null;
+      highlight = player.lastAction;
+    } else {
+      player.lastAction = {
+        type: 'dispose',
+        disposedPos: indices[0],
+        disposedPositions: indices,
+        timestamp: Date.now(),
+      };
+      highlight = player.lastAction;
+    }
+
     return {
       success: true,
+      highlight,
       result: {
         cards: selectedCards.map(toPublicCard),
         wrongCount: wrong.length,
@@ -400,7 +442,16 @@ class GameEngine {
     const item = player.hand.splice(f, 1)[0];
     player.hand.splice(t, 0, item);
 
-    return { success: true };
+    player.lastAction = {
+      type: 'arrange',
+      fromPos: f,
+      toPos: t,
+      disposedPos: f,
+      insertedPos: t,
+      timestamp: Date.now(),
+    };
+
+    return { success: true, from: f, to: t, highlight: player.lastAction };
   }
 
   /**

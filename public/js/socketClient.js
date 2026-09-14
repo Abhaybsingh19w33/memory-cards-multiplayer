@@ -63,6 +63,14 @@ const SocketClient = {
     this.socket.on('jSwapNotice', (data) => {
       UI.showNotice(`🔄 ${data.message}`);
     });
+
+    // Card action highlight event (draw & dispose, arrange, insert)
+    this.socket.on('cardHighlight', (data) => {
+      if (data && data.pid) {
+        Store.setHighlight(data.pid, data);
+        UI.render();
+      }
+    });
   },
 
   /**

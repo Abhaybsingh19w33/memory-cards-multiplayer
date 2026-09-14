@@ -255,12 +255,108 @@ input[type="text"]:focus, input[type="number"]:focus {
 }
 
 .miniCard {
-  width: 13px;
-  height: 19px;
+  width: 14px;
+  height: 20px;
   border-radius: 3px;
   background: repeating-linear-gradient(45deg, var(--card-back-1), var(--card-back-1) 3px, var(--card-back-2) 3px, var(--card-back-2) 6px);
   border: 1px solid #bcdcff;
   animation: miniIn 0.3s ease both;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.miniCard.highlight-gold {
+  border: 2px solid #ffc857 !important;
+  box-shadow: 0 0 6px #ffc857, 0 0 12px rgba(255, 200, 87, 0.7) !important;
+  transform: translateY(-2px) scale(1.15);
+  animation: pulseGoldMini 1.2s infinite alternate ease-in-out !important;
+  z-index: 2;
+}
+
+.miniCard.highlight-red {
+  border: 2px solid #ff3b4e !important;
+  box-shadow: 0 0 6px #ff3b4e, 0 0 12px rgba(255, 59, 78, 0.7) !important;
+  transform: translateY(-2px) scale(1.15);
+  animation: pulseRedMini 1.2s infinite alternate ease-in-out !important;
+  z-index: 2;
+}
+
+.miniCard.disposed {
+  background: repeating-linear-gradient(45deg, #70111a, #70111a 3px, #4a0c12 3px, #4a0c12 6px) !important;
+  opacity: 0.9;
+  position: relative;
+}
+
+.miniCard.disposed::after {
+  content: '✕';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 8px;
+  color: #ffadb3;
+  font-weight: 900;
+  line-height: 1;
+}
+
+@keyframes pulseGoldMini {
+  0% {
+    box-shadow: 0 0 4px #ffc857, 0 0 8px rgba(255, 200, 87, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 8px #ffe285, 0 0 16px rgba(255, 226, 133, 0.9);
+  }
+}
+
+@keyframes pulseRedMini {
+  0% {
+    box-shadow: 0 0 4px #ff3b4e, 0 0 8px rgba(255, 59, 78, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 8px #ff6675, 0 0 16px rgba(255, 102, 117, 0.9);
+  }
+}
+
+.actionPill {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  margin: 4px 0 2px;
+  font-size: 10px;
+  flex-wrap: wrap;
+}
+
+.pillGold {
+  background: rgba(255, 200, 87, 0.2);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.pillRed {
+  background: rgba(255, 59, 78, 0.2);
+  border: 1px solid #ff4d5e;
+  color: #ff8591;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+/* Card highlights in local hand */
+.card.highlight-gold {
+  border: 3px solid #ffc857 !important;
+  box-shadow: 0 0 12px #ffc857, 0 0 24px rgba(255, 200, 87, 0.6) !important;
+  animation: pulseGoldMini 1.4s infinite alternate ease-in-out;
+}
+
+.card.highlight-red {
+  border: 3px solid #ff3b4e !important;
+  box-shadow: 0 0 12px #ff3b4e, 0 0 24px rgba(255, 59, 78, 0.6) !important;
+  animation: pulseRedMini 1.4s infinite alternate ease-in-out;
 }
 
 @keyframes miniIn {

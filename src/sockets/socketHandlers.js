@@ -192,6 +192,15 @@ function registerSocketHandlers(io) {
         return;
       }
 
+      if (res.insertedPos !== undefined) {
+        io.to(room.code).emit('cardHighlight', {
+          pid,
+          type: 'insert',
+          insertedPos: res.insertedPos,
+          timestamp: Date.now(),
+        });
+      }
+
       broadcastState(io, room);
     });
 
@@ -205,6 +214,13 @@ function registerSocketHandlers(io) {
       if (!res.success) {
         emitError(io, pid, res.error);
         return;
+      }
+
+      if (res.highlight) {
+        io.to(room.code).emit('cardHighlight', {
+          pid,
+          ...res.highlight,
+        });
       }
 
       io.to(pid).emit('discardReveal', res.result);
@@ -270,6 +286,13 @@ function registerSocketHandlers(io) {
       const pid = socket.data.pid;
       const res = GameEngine.arrangeMove(room, pid, from, to);
       if (!res.success) return;
+
+      if (res.highlight) {
+        io.to(room.code).emit('cardHighlight', {
+          pid,
+          ...res.highlight,
+        });
+      }
 
       broadcastState(io, room);
     });

@@ -222,13 +222,74 @@ const UI = {
       const p = s.players[i];
       const isCurrent = i === s.currentIndex;
       const isMe = p.pid === Store.me.pid;
-      const miniCards = Array.from({ length: p.count })
-        .map(() => '<div class="miniCard"></div>')
-        .join('');
+
+      const hl = Store.getHighlight(p.pid) || (p.lastAction && (Date.now() - (p.lastAction.timestamp || 0) < 5000) ? p.lastAction : null);
+
+      let miniCardsHtml = '';
+      let actionPillHtml = '';
+
+      if (hl && hl.type === 'draw_dispose') {
+        const disposedIdx = typeof hl.disposedPos === 'number' ? hl.disposedPos : -1;
+        const insertedIdx = typeof hl.insertedPos === 'number' ? hl.insertedPos : -1;
+
+        for (let c = 0; c < p.count; c++) {
+          if (c === disposedIdx) {
+            miniCardsHtml += '<div class="miniCard highlight-red disposed" title="Disposed card"></div>';
+          }
+          const isGold = c === insertedIdx;
+          miniCardsHtml += `<div class="miniCard ${isGold ? 'highlight-gold' : ''}" title="Card #${c + 1}"></div>`;
+        }
+        if (disposedIdx >= p.count) {
+          miniCardsHtml += '<div class="miniCard highlight-red disposed" title="Disposed card"></div>';
+        }
+
+        const goldLabel = insertedIdx >= 0 ? `<span class="pillGold">★ Inserted #${insertedIdx + 1}</span>` : '';
+        const redLabel = disposedIdx >= 0 ? `<span class="pillRed">✕ Disposed #${disposedIdx + 1}</span>` : '';
+        actionPillHtml = `<div class="actionPill">${goldLabel}${redLabel}</div>`;
+
+      } else if (hl && hl.type === 'arrange') {
+        const fromIdx = typeof hl.fromPos === 'number' ? hl.fromPos : -1;
+        const toIdx = typeof hl.toPos === 'number' ? hl.toPos : -1;
+
+        for (let c = 0; c < p.count; c++) {
+          let extra = '';
+          if (c === toIdx) extra = 'highlight-gold';
+          else if (c === fromIdx) extra = 'highlight-red';
+          miniCardsHtml += `<div class="miniCard ${extra}" title="Card #${c + 1}"></div>`;
+        }
+        actionPillHtml = `<div class="actionPill"><span class="pillRed">From #${fromIdx + 1}</span> ➔ <span class="pillGold">To #${toIdx + 1}</span></div>`;
+
+      } else if (hl && hl.type === 'insert') {
+        const insertedIdx = typeof hl.insertedPos === 'number' ? hl.insertedPos : -1;
+        for (let c = 0; c < p.count; c++) {
+          const isGold = c === insertedIdx;
+          miniCardsHtml += `<div class="miniCard ${isGold ? 'highlight-gold' : ''}" title="Card #${c + 1}"></div>`;
+        }
+        actionPillHtml = `<div class="actionPill"><span class="pillGold">★ Inserted #${insertedIdx + 1}</span></div>`;
+
+      } else if (hl && hl.type === 'dispose') {
+        const disposedIdx = typeof hl.disposedPos === 'number' ? hl.disposedPos : -1;
+        for (let c = 0; c < p.count; c++) {
+          if (c === disposedIdx) {
+            miniCardsHtml += '<div class="miniCard highlight-red disposed" title="Disposed card"></div>';
+          }
+          miniCardsHtml += `<div class="miniCard" title="Card #${c + 1}"></div>`;
+        }
+        if (disposedIdx >= p.count) {
+          miniCardsHtml += '<div class="miniCard highlight-red disposed" title="Disposed card"></div>';
+        }
+        actionPillHtml = `<div class="actionPill"><span class="pillRed">✕ Disposed #${disposedIdx + 1}</span></div>`;
+
+      } else {
+        miniCardsHtml = Array.from({ length: p.count })
+          .map((_, idx) => `<div class="miniCard" title="Card #${idx + 1}"></div>`)
+          .join('');
+      }
 
       ps += `<div class="player ${isCurrent ? 'current' : ''} ${isMe ? 'me' : ''} ${p.connected ? '' : 'offline'}">
         <div class="pname">${this.esc(p.name)}${isMe ? ' (you)' : ''}${isCurrent ? ' •' : ''}</div>
-        <div class="miniHand">${miniCards}</div>
+        <div class="miniHand">${miniCardsHtml}</div>
+        ${actionPillHtml}
         <div class="count">${p.count} card${p.count === 1 ? '' : 's'}${p.connected ? '' : ' · offline'}</div>
       </div>`;
     }
@@ -270,11 +331,22 @@ const UI = {
     const my = Store.myEntry();
     this.$('handTitle').textContent = my ? `Your cards (${my.count})` : 'Your cards';
 
+    const hl = Store.getHighlight(Store.me.pid) || (my && my.lastAction && (Date.now() - (my.lastAction.timestamp || 0) < 5000) ? my.lastAction : null);
+
     let handHtml = '';
     if (my) {
       for (let i = 0; i < my.count; i++) {
         const isSelected = Store.selected.has(i);
-        handHtml += `<div class="card back ${isSelected ? 'selected' : ''}" onclick="UI.toggleSelect(${i})"></div>`;
+        let hlClass = '';
+        if (hl) {
+          if (hl.type === 'draw_dispose' || hl.type === 'insert') {
+            if (i === hl.insertedPos) hlClass = 'highlight-gold';
+          } else if (hl.type === 'arrange') {
+            if (i === hl.toPos) hlClass = 'highlight-gold';
+            else if (i === hl.fromPos) hlClass = 'highlight-red';
+          }
+        }
+        handHtml += `<div class="card back ${isSelected ? 'selected' : ''} ${hlClass}" onclick="UI.toggleSelect(${i})"></div>`;
       }
     }
     this.$('hand').innerHTML = handHtml;

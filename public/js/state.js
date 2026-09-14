@@ -28,6 +28,10 @@ const Store = {
   // Tracks active Queen peek countdown to prevent premature modal closure
   isPeeking: false,
 
+  // Active action highlights per player pid: Map<pid, { type, insertedPos, disposedPos, fromPos, toPos, expiresAt }>
+  highlights: {},
+  _highlightTimers: {},
+
   /**
    * Persists player identity credentials in browser localStorage.
    */
@@ -79,6 +83,48 @@ const Store = {
     this.arrangeSelected = null;
     this.autoModalOpen = null;
     this.isPeeking = false;
+    this.highlights = {};
+    if (this._highlightTimers) {
+      for (const t of Object.values(this._highlightTimers)) clearTimeout(t);
+      this._highlightTimers = {};
+    }
+  },
+
+  /**
+   * Sets temporary card action highlight for a player (auto-expires after 5 seconds).
+   * @param {string} pid
+   * @param {object} highlight
+   */
+  setHighlight(pid, highlight) {
+    if (!pid || !highlight) return;
+    const expiresAt = Date.now() + 5000;
+    this.highlights[pid] = {
+      ...highlight,
+      expiresAt,
+    };
+    if (this._highlightTimers && this._highlightTimers[pid]) {
+      clearTimeout(this._highlightTimers[pid]);
+    }
+    if (!this._highlightTimers) this._highlightTimers = {};
+    this._highlightTimers[pid] = setTimeout(() => {
+      delete this.highlights[pid];
+      if (typeof UI !== 'undefined' && typeof UI.render === 'function') {
+        UI.render();
+      }
+    }, 5000);
+  },
+
+  /**
+   * Gets active highlight for a player if not expired.
+   * @param {string} pid
+   * @returns {object|null}
+   */
+  getHighlight(pid) {
+    const hl = this.highlights[pid];
+    if (hl && hl.expiresAt > Date.now()) {
+      return hl;
+    }
+    return null;
   },
 
   /**
